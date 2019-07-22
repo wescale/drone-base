@@ -102,3 +102,12 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+# project specs
+.secrets
+.idea
+.vscode
+.DS_Store
+.terraform
+terraform.tfstate.backup
+*.retry
