@@ -22,3 +22,9 @@ terraform init
 terraform plan -var=team=$TEAM -var=env=$ENV -var=region=$AWS_REGION -state=$TEAM-$ENV.$AWS_REGION.tfstate
 terraform apply -var=team=$TEAM -var=env=$ENV -var=region=$AWS_REGION -state=$TEAM-$ENV.$AWS_REGION.tfstate
 ```
+
+## Set the route53 path
+
+make a hosted zone, like this
+`team-env-awsRegion.example.com.`
+and a A Record set on the wanted IP.

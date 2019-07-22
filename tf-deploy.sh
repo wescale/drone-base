@@ -22,9 +22,9 @@ while true; do
     # --awsProfile)
     #     awsProfile=$2
     #     shift 2 ;;
-    # --layer)
-    #     layer=$2
-    #     shift 2 ;;
+    --layer)
+        layer=$2
+        shift 2 ;;
     '')
         break;;
     *)
@@ -33,10 +33,11 @@ while true; do
   esac
 done
 
+# TODO: Select one layer / or treat all
 # TODO: Add auto-approval option
 # TODO: Reverse ls when destroy
 
-if [ -z "$team" ] || [ -z "$env" ] || [ -z "$awsRegion" ] || [ -z "$provider" ] || [ -z "$tfAction" ]; then
+if [ -z "$team" ] || [ -z "$env" ] || [ -z "$awsRegion" ] || [ -z "$provider" ] || [ -z "$tfAction" ] || [ -z "$layer" ]; then
     echo "Usage:
     ./tf-deploy.sh \\
         --team jdwsc \\
@@ -44,12 +45,13 @@ if [ -z "$team" ] || [ -z "$env" ] || [ -z "$awsRegion" ] || [ -z "$provider" ] 
         --provider aws \\
         --awsRegion eu-west-1 \\
         --tfAction plan \\
+        --layer 001-vpc \\
         [--awsProfile profileName] \\
         [--layer 001-vpc1]"
     exit 1
 fi
 
-tfConfigDir=.secrets/tf-config
+tfConfigDir=.secrets/tf-aws-config
 layersDir=providers/${provider}/terraform
 
 function tf_init() {
@@ -61,15 +63,16 @@ function tf_init() {
         -force-copy
 }
 
-for layer in $(ls "$layersDir"); do
-    if [[ $layer == '001-vpc' ]] || [[ $layer == '002-asg' ]]; then
+# for layer in $(ls "$layersDir"); do
+#     # if [[ $layer == '001-vpc' ]] || [[ $layer == '002-asg' ]]; then
+#     if [[ $layer == '001-vpc' ]]; then
 
-        currentLayerDir="providers/${provider}/terraform/${layer}"
-        cd $currentLayerDir
+currentLayerDir="providers/${provider}/terraform/${layer}"
+cd $currentLayerDir
 
-        tf_init
-        terraform $tfAction \
-            -var-file ./../../../../${tfConfigDir}/${team}-${env}-${provider}-tf-${layer}.tfvars \
-            -var-file ./../../../../${tfConfigDir}/${team}-${env}-${provider}-tf.tfvars
-    fi
-done
+tf_init
+terraform $tfAction \
+    -var-file ./../../../../${tfConfigDir}/${team}-${env}-${provider}-tf-${layer}.tfvars \
+    -var-file ./../../../../${tfConfigDir}/${team}-${env}-${provider}-tf.tfvars
+#     fi
+# done
