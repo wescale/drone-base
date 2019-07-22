@@ -19,6 +19,6 @@ docker run -it \
 ```
 cd providers/aws/terraform/000-tfstate
 terraform init
-terraform plan -var=team=team -var=env=env -var=region=eu-west-1 -state=team-env.eu-west-1.tfstate
-terraform apply -var=team=team -var=env=env -var=region=eu-west-1 -state=team-env.eu-west-1.tfstate
+terraform plan -var=team=$TEAM -var=env=$ENV -var=region=$AWS_REGION -state=$TEAM-$ENV.$AWS_REGION.tfstate
+terraform apply -var=team=$TEAM -var=env=$ENV -var=region=$AWS_REGION -state=$TEAM-$ENV.$AWS_REGION.tfstate
 ```
