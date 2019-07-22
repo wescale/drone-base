@@ -12,7 +12,6 @@ RUN wget --quiet https://releases.hashicorp.com/terraform/0.12.1/terraform_0.12.
 
 WORKDIR /userdata
 RUN mkdir .secrets
-RUN mkdir .terraform
 
 ENV LC_ALL=C.UTF-8
 ENV LANG=C.UTF-8

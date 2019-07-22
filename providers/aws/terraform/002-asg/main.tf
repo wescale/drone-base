@@ -1,47 +1,47 @@
 
-# resource "aws_launch_configuration" "launch_conf" {
-#   name_prefix = "${var.team}-${var.env}-${var.region}"
-#   image_id = "${data.aws_ami.debian.id}"
-#   instance_type = "${var.instance_type}"
-#   key_name = "${var.team}-${var.env}-${var.region}"
-#   associate_public_ip_address = true
-#   security_groups = [
-#     "${aws_security_group.asg_ingress.id}"
-#   ]
-#   ebs_optimized = false
-#   user_data = "${data.template_file.user-data.rendered}"
-#   iam_instance_profile = "${aws_iam_instance_profile.asg_profile.name}"
-#   lifecycle {
-#     create_before_destroy = true
-#   }
-# }
+resource "aws_launch_configuration" "launch_conf" {
+  name_prefix = "${var.team}-${var.env}-${var.region}"
+  image_id = "${data.aws_ami.debian.id}"
+  instance_type = "${var.instance_type}"
+  key_name = "${var.team}-${var.env}-${var.region}"
+  associate_public_ip_address = true
+  security_groups = [
+    "${aws_security_group.asg_ingress.id}"
+  ]
+  ebs_optimized = false
+  user_data = "${data.template_file.user-data.rendered}"
+  iam_instance_profile = "${aws_iam_instance_profile.asg_profile.name}"
+  lifecycle {
+    create_before_destroy = true
+  }
+}
 
-# resource "aws_autoscaling_group" "asg" {
-#   availability_zones = [
-#     "${var.region}a",
-#     "${var.region}b"
-#   ]
-#   name_prefix = "${var.team}-${var.env}-${var.region}-asg"
-#   min_size = "1"
-#   max_size = "1"
-#   desired_capacity = "1"
-#   health_check_grace_period = 300
-#   health_check_type = "EC2"
-#   force_delete = true
-#   vpc_zone_identifier = [
-#     "${data.terraform_remote_state.vpc.outputs.public_subnet_id_a}",
-#     "${data.terraform_remote_state.vpc.outputs.public_subnet_id_b}"
-#   ]
-#   launch_configuration = "${aws_launch_configuration.launch_conf.name}"
-#   lifecycle {
-#     create_before_destroy = true
-#   }
-#   tag {
-#     key = "Name"
-#     value = "${var.team}-${var.env}-${var.region}-instance"
-#     propagate_at_launch = true
-#   }
-# }
+resource "aws_autoscaling_group" "asg" {
+  availability_zones = [
+    "${var.region}a",
+    "${var.region}b"
+  ]
+  name_prefix = "${var.team}-${var.env}-${var.region}-asg"
+  min_size = "1"
+  max_size = "1"
+  desired_capacity = "1"
+  health_check_grace_period = 300
+  health_check_type = "EC2"
+  force_delete = true
+  vpc_zone_identifier = [
+    "${data.terraform_remote_state.vpc.outputs.public_subnet_id_a}",
+    "${data.terraform_remote_state.vpc.outputs.public_subnet_id_b}"
+  ]
+  launch_configuration = "${aws_launch_configuration.launch_conf.name}"
+  lifecycle {
+    create_before_destroy = true
+  }
+  tag {
+    key = "Name"
+    value = "${var.team}-${var.env}-${var.region}-instance"
+    propagate_at_launch = true
+  }
+}
 
 resource "aws_security_group" "asg_ingress" {
   name_prefix = "${var.team}-${var.env}-${var.region}-asg-ingress"
@@ -72,50 +72,50 @@ resource "aws_security_group" "asg_ingress" {
   }
 }
 
-# resource "aws_iam_instance_profile" "asg_profile" {
-#   name = "asg-profile"
-#   role = "${aws_iam_role.asg_role.name}"
-# }
+resource "aws_iam_instance_profile" "asg_profile" {
+  name = "asg-profile"
+  role = "${aws_iam_role.asg_role.name}"
+}
 
-# resource "aws_iam_role" "asg_role" {
-#   name = "asg-role"
-#   path = "/"
-#   assume_role_policy = <<EOF
-# {
-#   "Version": "2012-10-17",
-#   "Statement": [
-#     {
-#       "Action": "sts:AssumeRole",
-#       "Principal": {
-#         "Service": "ec2.amazonaws.com"
-#       },
-#       "Effect": "Allow",
-#       "Sid": ""
-#     }
-#   ]
-# }
-# EOF
-# }
+resource "aws_iam_role" "asg_role" {
+  name = "asg-role"
+  path = "/"
+  assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": "sts:AssumeRole",
+      "Principal": {
+        "Service": "ec2.amazonaws.com"
+      },
+      "Effect": "Allow",
+      "Sid": ""
+    }
+  ]
+}
+EOF
+}
 
-# resource "aws_iam_role_policy" "asg_main_policy" {
-#   name = "asg-main-policy"
-#   role = "${aws_iam_role.asg_role.id}"
+resource "aws_iam_role_policy" "asg_main_policy" {
+  name = "asg-main-policy"
+  role = "${aws_iam_role.asg_role.id}"
 
-#   policy = <<EOF
-# {
-#     "Version": "2012-10-17",
-#     "Statement": [
-#         {
-#             "Effect": "Allow",
-#             "Action": [
-#                 "ecr:*",
-#                 "secretsmanager:*"
-#             ],
-#             "Resource": [
-#                 "*"
-#             ]
-#         }
-#     ]
-# }
-# EOF
-# }
+  policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "ecr:*",
+                "secretsmanager:*"
+            ],
+            "Resource": [
+                "*"
+            ]
+        }
+    ]
+}
+EOF
+}
