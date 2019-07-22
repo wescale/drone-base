@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -ex
+set -e
 
 while true; do
     case "$1" in
@@ -12,6 +12,9 @@ while true; do
         shift 2 ;;
     --provider)
         provider=$2
+        shift 2 ;;
+    --tfAction)
+        tfAction=$2
         shift 2 ;;
     --awsRegion)
         awsRegion=$2
@@ -30,17 +33,19 @@ while true; do
   esac
 done
 
-if [ -z "$team" ] && [ -z "$env" ] && [ -z "$region" ] && [ -z "$provider" ]; then
+# TODO: Add auto-approval option
+# TODO: Reverse ls when destroy
+
+if [ -z "$team" ] || [ -z "$env" ] || [ -z "$awsRegion" ] || [ -z "$provider" ] || [ -z "$tfAction" ]; then
     echo "Usage:
-    ./deploy.sh \\
+    ./tf-deploy.sh \\
         --team jdwsc \\
         --env dev \\
         --provider aws \\
         --awsRegion eu-west-1 \\
-        --awsProfile profileName \\
-        --layer 001-vpc1 \\
-        [--test] \\
-        [--cfn-nag]"
+        --tfAction plan \\
+        [--awsProfile profileName] \\
+        [--layer 001-vpc1]"
     exit 1
 fi
 
@@ -57,13 +62,13 @@ function tf_init() {
 }
 
 for layer in $(ls "$layersDir"); do
-    if [[ $layer != '000-tfstate' ]]; then
+    if [[ $layer == '001-vpc' ]] || [[ $layer == '002-asg' ]]; then
 
         currentLayerDir="providers/${provider}/terraform/${layer}"
         cd $currentLayerDir
 
         tf_init
-        terraform plan \
+        terraform $tfAction \
             -var-file ./../../../../${tfConfigDir}/${team}-${env}-${provider}-tf-${layer}.tfvars \
             -var-file ./../../../../${tfConfigDir}/${team}-${env}-${provider}-tf.tfvars
     fi
