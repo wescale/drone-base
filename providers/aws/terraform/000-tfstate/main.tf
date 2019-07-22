@@ -1,10 +1,9 @@
-
 resource "aws_s3_bucket" "tfstate_bucket" {
   bucket = "${var.team}-${var.env}-${var.region}-tfstate"
   acl    = "private"
-  region = "${var.region}"
+  region = var.region
 
-  versioning = {
+  versioning {
     enabled = true
   }
 
@@ -24,12 +23,13 @@ resource "aws_dynamodb_table" "tfstate_lock" {
     type = "S"
   }
 
-  ttl = {
+  ttl {
     attribute_name = "TimeToExist"
-    enabled = false
+    enabled        = false
   }
 
   tags = {
-    Name        = "${var.team}-${var.env}-${var.region}-tfstate-lock"
+    Name = "${var.team}-${var.env}-${var.region}-tfstate-lock"
   }
 }
+

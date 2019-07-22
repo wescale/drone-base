@@ -1,3 +1,9 @@
-variable "team" {}
-variable "env" {}
-variable "region" {}
+variable "team" {
+}
+
+variable "env" {
+}
+
+variable "region" {
+}
+
