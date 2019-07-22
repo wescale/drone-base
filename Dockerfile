@@ -10,6 +10,9 @@ RUN wget --quiet https://releases.hashicorp.com/terraform/0.12.1/terraform_0.12.
   && mv terraform /usr/bin \
   && rm terraform_0.12.1_linux_amd64.zip
 
+RUN mkdir .secrets
+RUN mkdir .terraform
+
 WORKDIR /userdata
 
 ENV LC_ALL=C.UTF-8
