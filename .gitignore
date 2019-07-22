@@ -111,3 +111,4 @@ venv.bak/
 .terraform
 terraform.tfstate.backup
 *.retry
+*.tfstate
