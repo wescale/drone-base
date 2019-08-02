@@ -36,10 +36,10 @@
   register: node_token
 
 - name: Store Master node-token
-  set_fact: 
+  set_fact:
    token: "{{ node_token.content | b64decode | regex_replace('\n', '') }}"
 
-- name: Restore node-token file access 
+- name: Restore node-token file access
   file:
     path: /var/lib/rancher/k3s/server
     mode: "{{ p.stat.mode }}"

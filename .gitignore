@@ -115,3 +115,4 @@ terraform.tfstate.backup
 *.tfstate.backup
 
 id_rsa*
+connect-aws
