@@ -3,6 +3,34 @@ resource "aws_key_pair" "pub_key" {
   public_key = "${file("../../../../id_rsa.pub")}"
 }
 
+resource "aws_security_group" "bastion_sg" {
+  name_prefix = "${var.team}-${var.env}-${var.region}-asg-ingress"
+  vpc_id      = "${data.terraform_remote_state.vpc.outputs.vpc_id}"
+}
+
+resource "aws_security_group_rule" "ingress_ssh" {
+  security_group_id = "${aws_security_group.bastion_sg.id}"
+
+  from_port   = 22
+  to_port     = 22
+  protocol    = "tcp"
+  cidr_blocks = ["${var.ingress_cidr}"]
+  type        = "ingress"
+}
+
+resource "aws_instance" "k3s_bastion" {
+  ami                         = "${data.aws_ami.debian.id}"
+  instance_type               = "${var.instance_type}"
+  vpc_security_group_ids      = ["${aws_security_group.bastion_sg.id}"]
+  subnet_id                   = "${data.terraform_remote_state.vpc.outputs.public_subnet_id_a}"
+  associate_public_ip_address = true
+  key_name                    = "${aws_key_pair.pub_key.id}"
+
+  tags = {
+    Name = "k3s-bastion"
+  }
+}
+
 resource "aws_launch_configuration" "launch_configuration_master" {
   name_prefix = "launch-configuration-master"
 
@@ -13,7 +41,7 @@ resource "aws_launch_configuration" "launch_configuration_master" {
   associate_public_ip_address = true
 
   security_groups = [
-    "${aws_security_group.asg_ingress.id}"
+    "${aws_security_group.asg_sg.id}"
   ]
 
   ebs_optimized = false
@@ -47,7 +75,7 @@ resource "aws_autoscaling_group" "asg_master" {
   }
   tag {
     key                 = "Name"
-    value               = "asg-master"
+    value               = "k3s-master"
     propagate_at_launch = true
   }
 }
@@ -62,7 +90,7 @@ resource "aws_launch_configuration" "launch_configuration_nodes" {
   associate_public_ip_address = true
 
   security_groups = [
-    "${aws_security_group.asg_ingress.id}"
+    "${aws_security_group.asg_sg.id}"
   ]
 
   ebs_optimized = false
@@ -77,9 +105,9 @@ resource "aws_launch_configuration" "launch_configuration_nodes" {
 resource "aws_autoscaling_group" "asg_nodes" {
   name_prefix = "asg-nodes"
 
-  min_size                  = "2"
-  max_size                  = "2"
-  desired_capacity          = "2"
+  min_size                  = "1"
+  max_size                  = "1"
+  desired_capacity          = "1"
   health_check_grace_period = 300
   health_check_type         = "EC2"
   force_delete              = true
@@ -94,50 +122,41 @@ resource "aws_autoscaling_group" "asg_nodes" {
   lifecycle {
     create_before_destroy = true
   }
+
   tag {
     key                 = "Name"
-    value               = "asg-nodes"
+    value               = "k3s-node"
     propagate_at_launch = true
   }
 }
 
-resource "aws_security_group" "asg_ingress" {
+resource "aws_security_group" "asg_sg" {
   name_prefix = "${var.team}-${var.env}-${var.region}-asg-ingress"
   vpc_id      = "${data.terraform_remote_state.vpc.outputs.vpc_id}"
 }
 
-resource "aws_security_group_rule" "ingress_ssh" {
-  security_group_id = "${aws_security_group.asg_ingress.id}"
-
-  from_port   = 22
-  to_port     = 22
-  protocol    = "TCP"
-  cidr_blocks = ["${var.ingress_cidr}"]
-  type        = "ingress"
-}
-
 resource "aws_security_group_rule" "ingress_http" {
-  security_group_id = "${aws_security_group.asg_ingress.id}"
+  security_group_id = "${aws_security_group.asg_sg.id}"
 
   from_port   = 80
   to_port     = 80
-  protocol    = "TCP"
+  protocol    = "tcp"
   cidr_blocks = ["0.0.0.0/0"]
   type        = "ingress"
 }
 
 resource "aws_security_group_rule" "ingress_https" {
-  security_group_id = "${aws_security_group.asg_ingress.id}"
+  security_group_id = "${aws_security_group.asg_sg.id}"
 
   from_port   = 443
   to_port     = 443
-  protocol    = "TCP"
+  protocol    = "tcp"
   cidr_blocks = ["0.0.0.0/0"]
   type        = "ingress"
 }
 
 resource "aws_security_group_rule" "egress_all" {
-  security_group_id = "${aws_security_group.asg_ingress.id}"
+  security_group_id = "${aws_security_group.asg_sg.id}"
 
   from_port   = 0
   to_port     = 0
