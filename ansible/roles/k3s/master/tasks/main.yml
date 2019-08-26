@@ -63,6 +63,15 @@
     regexp: 'https://localhost:6443'
     replace: 'https://{{master_ip}}:6443'
 
+- name: Read kubectl from master
+  slurp:
+    src: /home/{{ ansible_user }}/.kube/config
+  register: kubectl_config
+
+- name: Store kubectl configuration
+  set_fact:
+   kubectl_config: "{{ kubectl_config.content | b64decode }}"
+
 - name: Create kubectl symlink
   file:
     src: /usr/local/bin/k3s

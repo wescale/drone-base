@@ -15,3 +15,8 @@
   become: yes
   roles:
     - { role: k3s/node }
+
+- hosts: bastion
+  become: yes
+  roles:
+    - { role: k3s/bastion }

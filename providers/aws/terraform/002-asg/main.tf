@@ -30,7 +30,7 @@ resource "aws_security_group_rule" "ingress_ssh_bastion" {
   from_port   = 22
   to_port     = 22
   protocol    = "tcp"
-  cidr_blocks = ["${var.ingress_cidr}"]
+  cidr_blocks = ["0.0.0.0/0"]
   type        = "ingress"
 }
 
@@ -175,6 +175,16 @@ resource "aws_security_group_rule" "ingress_ssh_bastion_k3s" {
   to_port                  = 22
   protocol                 = "tcp"
   source_security_group_id = "${aws_security_group.bastion_sg.id}"
+  type                     = "ingress"
+}
+
+resource "aws_security_group_rule" "ingress_6443_k3s" {
+  security_group_id = "${aws_security_group.vpc_k3s.id}"
+
+  from_port                = 6443
+  to_port                  = 6443
+  protocol                 = "tcp"
+  cidr_blocks              = ["${var.vpc_cidr}"]
   type                     = "ingress"
 }
 

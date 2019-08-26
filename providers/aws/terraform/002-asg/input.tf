@@ -8,6 +8,10 @@ variable "instance_type" {
 }
 variable "ingress_cidr" {}
 
+variable "vpc_cidr" {
+  default = "11.0.0.0/16"
+}
+
 data "aws_ami" "debian" {
   most_recent = true
   filter {

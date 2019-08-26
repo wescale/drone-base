@@ -34,6 +34,9 @@ ${data.aws_instances.k3s_master.private_ips[0]} ansible_ssh_common_args='-o Prox
 [node]
 ${data.aws_instances.k3s_nodes.private_ips[0]} ansible_ssh_common_args='-o ProxyCommand="ssh -W %h:%p -q admin@${aws_instance.k3s_bastion.public_ip}"'
 
+[bastion]
+${aws_instance.k3s_bastion.public_ip}
+
 [k3s-cluster:children]
 master
 node
