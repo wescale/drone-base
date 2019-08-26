@@ -16,3 +16,24 @@
     dest: /home/{{ ansible_user }}/.kube/config
     content: |
       {{ hostvars[groups['master'][0]]['kubectl_config'] }}
+
+- name: Install helm (download script)
+  get_url:
+    url: https://git.io/get_helm.sh
+    dest: /home/{{ ansible_user }}/get_helm.sh
+    mode: 0700
+
+- name: Install helm (execute script)
+  shell: /home/{{ ansible_user }}/get_helm.sh
+
+- name: Configure tiller
+  shell: |
+    kubectl -n kube-system create serviceaccount tiller
+
+    kubectl create clusterrolebinding tiller \
+      --clusterrole=cluster-admin \
+      --serviceaccount=kube-system:tiller
+
+    helm init --service-account tiller
+  become_user: "{{ ansible_user }}"
+  become: false
