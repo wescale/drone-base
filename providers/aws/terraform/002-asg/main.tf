@@ -3,12 +3,28 @@ resource "aws_key_pair" "pub_key" {
   public_key = "${file("../../../../id_rsa.pub")}"
 }
 
+resource "aws_instance" "k3s_bastion" {
+  ami                         = "${data.aws_ami.debian.id}"
+  instance_type               = "${var.instance_type}"
+  subnet_id                   = "${data.terraform_remote_state.vpc.outputs.public_subnet_id_a}"
+  associate_public_ip_address = true
+  key_name                    = "${aws_key_pair.pub_key.id}"
+
+  vpc_security_group_ids = [
+    "${aws_security_group.bastion_sg.id}"
+  ]
+
+  tags = {
+    Name = "k3s-bastion"
+  }
+}
+
 resource "aws_security_group" "bastion_sg" {
-  name_prefix = "${var.team}-${var.env}-${var.region}-asg-ingress"
+  name_prefix = "${var.team}-${var.env}-${var.region}-bastion-sg"
   vpc_id      = "${data.terraform_remote_state.vpc.outputs.vpc_id}"
 }
 
-resource "aws_security_group_rule" "ingress_ssh" {
+resource "aws_security_group_rule" "ingress_ssh_bastion" {
   security_group_id = "${aws_security_group.bastion_sg.id}"
 
   from_port   = 22
@@ -18,17 +34,14 @@ resource "aws_security_group_rule" "ingress_ssh" {
   type        = "ingress"
 }
 
-resource "aws_instance" "k3s_bastion" {
-  ami                         = "${data.aws_ami.debian.id}"
-  instance_type               = "${var.instance_type}"
-  vpc_security_group_ids      = ["${aws_security_group.bastion_sg.id}"]
-  subnet_id                   = "${data.terraform_remote_state.vpc.outputs.public_subnet_id_a}"
-  associate_public_ip_address = true
-  key_name                    = "${aws_key_pair.pub_key.id}"
+resource "aws_security_group_rule" "egress_all_bastion" {
+  security_group_id = "${aws_security_group.bastion_sg.id}"
 
-  tags = {
-    Name = "k3s-bastion"
-  }
+  from_port   = 0
+  to_port     = 0
+  protocol    = "-1"
+  cidr_blocks = ["0.0.0.0/0"]
+  type        = "egress"
 }
 
 resource "aws_launch_configuration" "launch_configuration_master" {
@@ -38,11 +51,11 @@ resource "aws_launch_configuration" "launch_configuration_master" {
   instance_type = "${var.instance_type}"
   key_name      = "${aws_key_pair.pub_key.id}"
 
-  associate_public_ip_address = true
-
   security_groups = [
-    "${aws_security_group.asg_sg.id}"
+    "${aws_security_group.vpc_k3s.id}"
   ]
+
+  associate_public_ip_address = true
 
   ebs_optimized = false
 
@@ -87,11 +100,11 @@ resource "aws_launch_configuration" "launch_configuration_nodes" {
   instance_type = "${var.instance_type}"
   key_name      = "${aws_key_pair.pub_key.id}"
 
-  associate_public_ip_address = true
-
   security_groups = [
-    "${aws_security_group.asg_sg.id}"
+    "${aws_security_group.vpc_k3s.id}"
   ]
+
+  associate_public_ip_address = true
 
   ebs_optimized = false
 
@@ -130,13 +143,13 @@ resource "aws_autoscaling_group" "asg_nodes" {
   }
 }
 
-resource "aws_security_group" "asg_sg" {
-  name_prefix = "${var.team}-${var.env}-${var.region}-asg-ingress"
+resource "aws_security_group" "vpc_k3s" {
+  name_prefix = "${var.team}-${var.env}-${var.region}-vpc-k3s"
   vpc_id      = "${data.terraform_remote_state.vpc.outputs.vpc_id}"
 }
 
 resource "aws_security_group_rule" "ingress_http" {
-  security_group_id = "${aws_security_group.asg_sg.id}"
+  security_group_id = "${aws_security_group.vpc_k3s.id}"
 
   from_port   = 80
   to_port     = 80
@@ -145,8 +158,8 @@ resource "aws_security_group_rule" "ingress_http" {
   type        = "ingress"
 }
 
-resource "aws_security_group_rule" "ingress_https" {
-  security_group_id = "${aws_security_group.asg_sg.id}"
+resource "aws_security_group_rule" "ingress_https_k3s" {
+  security_group_id = "${aws_security_group.vpc_k3s.id}"
 
   from_port   = 443
   to_port     = 443
@@ -155,8 +168,18 @@ resource "aws_security_group_rule" "ingress_https" {
   type        = "ingress"
 }
 
-resource "aws_security_group_rule" "egress_all" {
-  security_group_id = "${aws_security_group.asg_sg.id}"
+resource "aws_security_group_rule" "ingress_ssh_bastion_k3s" {
+  security_group_id = "${aws_security_group.vpc_k3s.id}"
+
+  from_port                = 22
+  to_port                  = 22
+  protocol                 = "tcp"
+  source_security_group_id = "${aws_security_group.bastion_sg.id}"
+  type                     = "ingress"
+}
+
+resource "aws_security_group_rule" "egress_all_k3s" {
+  security_group_id = "${aws_security_group.vpc_k3s.id}"
 
   from_port   = 0
   to_port     = 0
