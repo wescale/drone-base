@@ -3,11 +3,15 @@
 set -e
 
 # default values :
+help=false
 action=apply
 region=eu-west-1
 
 while true; do
     case "$1" in
+    --help)
+        help=true
+        shift ;;
     --provider)
         provider=$2
         shift 2 ;;
@@ -36,7 +40,7 @@ while true; do
   esac
 done
 
-if [ -z "$account" ] || [ -z "$region" ] || [ -z "$action" ]; then
+if [ "$help" = true ] || [ -z "$account" ] || [ -z "$region" ] || [ -z "$action" ]; then
     echo "Usage:
     ./infra-bootstrap.sh \\
         --provider aws \\

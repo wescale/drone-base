@@ -3,11 +3,15 @@
 set -e
 
 # default values :
+help=false
 action=apply
 region=eu-west-1
 
 while true; do
     case "$1" in
+    --help)
+        help=true
+        shift ;;
     --account)
         account=$2
         group=$(echo $2 | cut -d'-' -f1)
@@ -33,7 +37,7 @@ while true; do
   esac
 done
 
-if [ -z "$account" ] || [ -z "$region" ] || [ -z "$action" ]; then
+if [ "$help" = true ] || [ -z "$account" ] || [ -z "$region" ] || [ -z "$action" ]; then
     echo "Usage:
     ./infra-builder-terraform.sh \\
         --account <group>-<env> \\
