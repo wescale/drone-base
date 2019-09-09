@@ -59,7 +59,6 @@ if [ "$action" = "apply" ] || [ "$action" = "destroy" ]; then
     options="-auto-approve"
 fi
 
-# for the selected layer :
 cd $bootstrap_dir
 terraform init
 terraform ${action} ${options} -var=group=${group} -var=env=${env} -var=region=${region} -state=${config_dir}/bootstrap-${provider}-${region}.tfstate
