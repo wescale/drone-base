@@ -8,6 +8,9 @@ region=eu-west-1
 
 while true; do
     case "$1" in
+    --provider)
+        provider=$2
+        shift 2 ;;
     --account)
         account=$2
         group=$(echo $2 | cut -d'-' -f1)
@@ -35,27 +38,19 @@ done
 
 if [ -z "$account" ] || [ -z "$region" ] || [ -z "$action" ]; then
     echo "Usage:
-    ./infra-builder-terraform.sh \\
+    ./infra-bootstrap.sh \\
+        --provider aws \\
         --account <group>-<env> \\
-        --layer 001-vpc1 \\
         [--region eu-west-1] \\
         [--plan] \\
         [--destroy]"
     exit 1
 fi
 
-function terraform_init() {
-    terraform init \
-        -backend-config "region=${region}" \
-        -backend-config "dynamodb_table=${account}-${region}-tfstate-lock" \
-        -backend-config "bucket=${account}-${region}-tfstate" \
-        -backend-config "key=${layer}.tfstate" \
-        -force-copy
-}
+config_dir="./../../../../configs/${group}/${env}/"
+layer_dir="./terraform/layers/001-main-aws/${layer}"
 
-config_dir="./../../../configs/${group}/${env}/"
-layer_dir="./terraform/bootstrap/${provider}/"
-
-cd $bootstrap_dir
-terraform_init
-terraform $action -var=group=$group -var=env=$env -var=region=$region -state=$group-$env.$region.tfstate
+# for the selected layer :
+cd $layer_dir
+terraform init
+terraform $action -var-file ${config_dir}/env.tfvars
