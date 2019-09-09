@@ -6,4 +6,3 @@ variable "env" {
 
 variable "region" {
 }
-

@@ -21,10 +21,10 @@ while true; do
         shift 2 ;;
     --plan)
         action=plan
-        shift 2 ;;
+        shift ;;
     --destroy)
         action=destroy
-        shift 2 ;;
+        shift ;;
     --layer)
         layer=$2
         shift 2 ;;
@@ -47,10 +47,15 @@ if [ -z "$account" ] || [ -z "$region" ] || [ -z "$action" ]; then
     exit 1
 fi
 
-config_dir="./../../../../configs/${group}/${env}/"
-layer_dir="./terraform/layers/001-main-aws/${layer}"
+config_dir="./../../../configs/${group}/${env}/terraform"
+bootstrap_dir="./terraform/bootstrap/${provider}/"
+
+options=""
+if [ "$action" = "apply" ] || [ "$action" = "destroy" ]; then
+    options="-auto-approve"
+fi
 
 # for the selected layer :
-cd $layer_dir
+cd $bootstrap_dir
 terraform init
-terraform $action -var-file ${config_dir}/env.tfvars
+terraform ${action} ${options} -var=group=${group} -var=env=${env} -var=region=${region} -state=${config_dir}/bootstrap-${provider}-${region}.tfstate

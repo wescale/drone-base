@@ -53,9 +53,14 @@ function terraform_init() {
         -force-copy
 }
 
-config_dir="./../../../configs/${group}/${env}/"
-layer_dir="./terraform/bootstrap/${provider}/"
+config_dir="./../../../configs/${group}/${env}/terraform"
+layer_dir="./terraform/layers/001-main-aws/${layer}"
 
-cd $bootstrap_dir
+options=""
+if [ "$action" = "apply" ] || [ "$action" = "destroy" ]; then
+    options="-auto-approve"
+fi
+
+cd $layer_dir
 terraform_init
-terraform $action -var=group=$group -var=env=$env -var=region=$region -state=$group-$env.$region.tfstate
+terraform ${action} ${options} -var-file ${config_dir}/env.tfvars

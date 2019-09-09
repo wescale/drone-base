@@ -1,7 +1,7 @@
 resource "aws_s3_bucket" "tfstate_bucket" {
   bucket = "${var.group}-${var.env}-${var.region}-tfstate"
   acl    = "private"
-  region = var.region
+  region = "${var.region}"
 
   versioning {
     enabled = true
