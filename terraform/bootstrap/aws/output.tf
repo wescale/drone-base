@@ -1,5 +1,5 @@
-output "team" {
-  value = var.team
+output "group" {
+  value = var.group
 }
 
 output "env" {

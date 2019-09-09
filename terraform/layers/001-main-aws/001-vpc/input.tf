@@ -1,4 +1,4 @@
-variable "team" {
+variable "group" {
 }
 
 variable "env" {

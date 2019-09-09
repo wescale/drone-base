@@ -9,7 +9,9 @@ region=eu-west-1
 while true; do
     case "$1" in
     --account)
-        group=$2
+        account=$2
+        group=$(echo $2 | cut -d'-' -f1)
+        env=$(echo $2 | cut -d'-' -f2-)
         shift 2 ;;
     --region)
         region=$2
@@ -51,13 +53,10 @@ function terraform_init() {
         -force-copy
 }
 
-config_dir=.secrets/tf-aws-config
-layer_dir="providers/aws/terraform/${layer}"
-# layers_dir=providers/aws/terraform
+config_dir="./../../../../configs/${group}/${env}/"
+layer_dir="./terraform/layers/001-main-aws/${layer}"
 
 # for the selected layer :
 cd $layer_dir
 terraform_init
-terraform $action \
-    -var-file ./../../../../${config_dir}/${account}-aws-tf-${layer}.tfvars \
-    -var-file ./../../../../${config_dir}/${account}-aws-tf.tfvars
+terraform $action -var-file ${config_dir}/env.tfvars

@@ -1,4 +1,4 @@
-variable "team" {}
+variable "group" {}
 variable "env" {}
 variable "region" {}
 variable "drone" {}
@@ -28,7 +28,7 @@ data "aws_ami" "debian" {
 data "terraform_remote_state" "vpc" {
   backend = "s3"
   config = {
-    bucket = "${var.team}-${var.env}-${var.region}-tfstate"
+    bucket = "${var.group}-${var.env}-${var.region}-tfstate"
     key = "001-vpc.tfstate"
     region = "${var.region}"
   }

@@ -1,5 +1,5 @@
 resource "aws_s3_bucket" "tfstate_bucket" {
-  bucket = "${var.team}-${var.env}-${var.region}-tfstate"
+  bucket = "${var.group}-${var.env}-${var.region}-tfstate"
   acl    = "private"
   region = var.region
 
@@ -8,12 +8,12 @@ resource "aws_s3_bucket" "tfstate_bucket" {
   }
 
   tags = {
-    Name = "${var.team}-${var.env}-${var.region}-tfstate"
+    Name = "${var.group}-${var.env}-${var.region}-tfstate"
   }
 }
 
 resource "aws_dynamodb_table" "tfstate_lock" {
-  name           = "${var.team}-${var.env}-${var.region}-tfstate-lock"
+  name           = "${var.group}-${var.env}-${var.region}-tfstate-lock"
   read_capacity  = 1
   write_capacity = 1
   hash_key       = "LockID"
@@ -29,7 +29,7 @@ resource "aws_dynamodb_table" "tfstate_lock" {
   }
 
   tags = {
-    Name = "${var.team}-${var.env}-${var.region}-tfstate-lock"
+    Name = "${var.group}-${var.env}-${var.region}-tfstate-lock"
   }
 }
 

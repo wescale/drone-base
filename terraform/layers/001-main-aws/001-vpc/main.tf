@@ -3,7 +3,7 @@ resource "aws_vpc" "vpc" {
   enable_dns_hostnames = true
   enable_dns_support   = true
   tags = {
-    Name = "${var.team}-${var.env}-vpc1"
+    Name = "${var.group}-${var.env}-vpc1"
   }
 }
 
@@ -20,7 +20,7 @@ resource "aws_route_table" "main" {
   }
 
   tags = {
-    Name = "${var.team}-${var.env}-vpc1-rt"
+    Name = "${var.group}-${var.env}-vpc1-rt"
   }
 }
 
@@ -32,7 +32,7 @@ resource "aws_main_route_table_association" "main" {
 module "zone_a" {
   source                        = "./zone"
   vpc_id                        = aws_vpc.vpc.id
-  vpc_name                      = "${var.team}-${var.env}-vpc1"
+  vpc_name                      = "${var.group}-${var.env}-vpc1"
   availability_zone             = "${var.region}a"
   public_subnet_cidr            = var.public_subnet_cidr_a
   public_gateway_route_table_id = aws_route_table.main.id
@@ -41,7 +41,7 @@ module "zone_a" {
 module "zone_b" {
   source                        = "./zone"
   vpc_id                        = aws_vpc.vpc.id
-  vpc_name                      = "${var.team}-${var.env}-vpc1"
+  vpc_name                      = "${var.group}-${var.env}-vpc1"
   availability_zone             = "${var.region}b"
   public_subnet_cidr            = var.public_subnet_cidr_b
   public_gateway_route_table_id = aws_route_table.main.id

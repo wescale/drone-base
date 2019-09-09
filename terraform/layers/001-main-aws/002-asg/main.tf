@@ -20,7 +20,7 @@ resource "aws_instance" "k3s_bastion" {
 }
 
 resource "aws_security_group" "bastion_sg" {
-  name_prefix = "${var.team}-${var.env}-${var.region}-bastion-sg"
+  name_prefix = "${var.group}-${var.env}-${var.region}-bastion-sg"
   vpc_id      = "${data.terraform_remote_state.vpc.outputs.vpc_id}"
 }
 
@@ -144,7 +144,7 @@ resource "aws_autoscaling_group" "asg_nodes" {
 }
 
 resource "aws_security_group" "vpc_k3s" {
-  name_prefix = "${var.team}-${var.env}-${var.region}-vpc-k3s"
+  name_prefix = "${var.group}-${var.env}-${var.region}-vpc-k3s"
   vpc_id      = "${data.terraform_remote_state.vpc.outputs.vpc_id}"
 }
 
