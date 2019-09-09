@@ -2,26 +2,24 @@
 
 set -e
 
+# default values :
+action=apply
+region=eu-west-1
+
 while true; do
     case "$1" in
-    --team)
-        team=$2
+    --account)
+        group=$2
         shift 2 ;;
-    --env)
-        env=$2
+    --region)
+        region=$2
         shift 2 ;;
-    --provider)
-        provider=$2
+    --plan)
+        action=plan
         shift 2 ;;
-    --tfAction)
-        tfAction=$2
+    --destroy)
+        action=destroy
         shift 2 ;;
-    --awsRegion)
-        awsRegion=$2
-        shift 2 ;;
-    # --awsProfile)
-    #     awsProfile=$2
-    #     shift 2 ;;
     --layer)
         layer=$2
         shift 2 ;;
@@ -33,46 +31,33 @@ while true; do
   esac
 done
 
-# TODO: Select one layer / or treat all
-# TODO: Add auto-approval option
-# TODO: Reverse ls when destroy
-
-if [ -z "$team" ] || [ -z "$env" ] || [ -z "$awsRegion" ] || [ -z "$provider" ] || [ -z "$tfAction" ] || [ -z "$layer" ]; then
+if [ -z "$account" ] || [ -z "$region" ] || [ -z "$action" ]; then
     echo "Usage:
     ./infra-builder-terraform.sh \\
-        --team jdwsc \\
-        --env dev \\
-        --provider aws \\
-        --awsRegion eu-west-1 \\
-        --tfAction plan \\
-        --layer 001-vpc \\
-        [--awsProfile profileName] \\
-        [--layer 001-vpc1]"
+        --account <group>-<env> \\
+        --layer 001-vpc1 \\
+        [--region eu-west-1] \\
+        [--plan] \\
+        [--destroy]"
     exit 1
 fi
 
-tfConfigDir=.secrets/tf-aws-config
-layersDir=providers/${provider}/terraform
-
-function tf_init() {
+function terraform_init() {
     terraform init \
-        -backend-config "region=${awsRegion}" \
-        -backend-config "dynamodb_table=${team}-${env}-${awsRegion}-tfstate-lock" \
-        -backend-config "bucket=${team}-${env}-${awsRegion}-tfstate" \
+        -backend-config "region=${region}" \
+        -backend-config "dynamodb_table=${account}-${region}-tfstate-lock" \
+        -backend-config "bucket=${account}-${region}-tfstate" \
         -backend-config "key=${layer}.tfstate" \
         -force-copy
 }
 
-# for layer in $(ls "$layersDir"); do
-#     # if [[ $layer == '001-vpc' ]] || [[ $layer == '002-asg' ]]; then
-#     if [[ $layer == '001-vpc' ]]; then
+config_dir=.secrets/tf-aws-config
+layer_dir="providers/aws/terraform/${layer}"
+# layers_dir=providers/aws/terraform
 
-currentLayerDir="providers/${provider}/terraform/${layer}"
-cd $currentLayerDir
-
-tf_init
-terraform $tfAction \
-    -var-file ./../../../../${tfConfigDir}/${team}-${env}-${provider}-tf-${layer}.tfvars \
-    -var-file ./../../../../${tfConfigDir}/${team}-${env}-${provider}-tf.tfvars
-#     fi
-# done
+# for the selected layer :
+cd $layer_dir
+terraform_init
+terraform $action \
+    -var-file ./../../../../${config_dir}/${account}-aws-tf-${layer}.tfvars \
+    -var-file ./../../../../${config_dir}/${account}-aws-tf.tfvars
