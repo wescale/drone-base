@@ -39,7 +39,7 @@ done
 
 if [ -z "$team" ] || [ -z "$env" ] || [ -z "$awsRegion" ] || [ -z "$provider" ] || [ -z "$tfAction" ] || [ -z "$layer" ]; then
     echo "Usage:
-    ./tf-deploy.sh \\
+    ./infra-builder-terraform.sh \\
         --team jdwsc \\
         --env dev \\
         --provider aws \\
