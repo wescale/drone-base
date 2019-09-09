@@ -22,10 +22,10 @@ while true; do
         shift 2 ;;
     --plan)
         action=plan
-        shift 2 ;;
+        shift ;;
     --destroy)
         action=destroy
-        shift 2 ;;
+        shift ;;
     --layer)
         layer=$2
         shift 2 ;;
@@ -41,7 +41,7 @@ if [ "$help" = true ] || [ -z "$account" ] || [ -z "$region" ] || [ -z "$action"
     echo "Usage:
     ./infra-builder-terraform.sh \\
         --account <group>-<env> \\
-        --layer 001-vpc1 \\
+        --layer 001-vpc \\
         [--region eu-west-1] \\
         [--plan] \\
         [--destroy]"
@@ -57,14 +57,16 @@ function terraform_init() {
         -force-copy
 }
 
-config_dir="./../../../configs/${group}/${env}/terraform"
-layer_dir="./terraform/layers/001-main-aws/${layer}"
+config_dir="./../../../../configs/${group}/${env}/terraform"
+layers_dir="./terraform/layers"
 
 options=""
 if [ "$action" = "apply" ] || [ "$action" = "destroy" ]; then
     options="-auto-approve"
 fi
 
-cd $layer_dir
+cd "$layers_dir/001-main-aws/${layer}"
 terraform_init
-terraform ${action} ${options} -var-file ${config_dir}/env.tfvars
+terraform ${action} ${options} \
+    -var-file ${config_dir}/commons.tfvars \
+    -var-file ${config_dir}/layer-${layer}.tfvars
