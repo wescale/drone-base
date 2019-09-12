@@ -1,39 +1,105 @@
-- name: Download kubectl
+- name: KUBERNETES - Download kubectl
   get_url:
     url: https://storage.googleapis.com/kubernetes-release/release/v1.15.0/bin/linux/amd64/kubectl
     dest: /usr/local/bin/kubectl
     mode: 0755
     force: yes
+  become: yes
 
-- name: Create directory .kube
+- name: KUBERNETES - Check if kube config is set
+  stat:
+    path: /home/{{ ansible_user }}/.kube/config
+  register: kube_config_file_details
+
+- name: KUBERNETES - Create directory .kube
   file:
     path: /home/{{ ansible_user }}/.kube
     state: directory
     owner: "{{ ansible_user }}"
+  when: not kube_config_file_details.stat.exists
 
-- name: Create kubectl
+- name: KUBERNETES - Create kubectl
   copy:
     dest: /home/{{ ansible_user }}/.kube/config
     content: |
       {{ hostvars[groups['master'][0]]['kubectl_config'] }}
+  when: not kube_config_file_details.stat.exists
 
-- name: Install helm (download script)
-  get_url:
-    url: https://git.io/get_helm.sh
-    dest: /home/{{ ansible_user }}/get_helm.sh
-    mode: 0700
+- name: PYTHON - Install pip package
+  package:
+    name: python-pip
+    state: present
+  become: yes
 
-- name: Install helm (execute script)
-  shell: /home/{{ ansible_user }}/get_helm.sh
+- name: PYTHON - Install openshift pip package for k8s module
+  pip:
+    name: openshift
+    state: present
 
-- name: Configure tiller
-  shell: |
-    kubectl -n kube-system create serviceaccount tiller
+- name: PYTHON - Install requests pip package for k8s module
+  pip:
+    name: requests
+    state: present
+    extra_args: --upgrade
 
-    kubectl create clusterrolebinding tiller \
-      --clusterrole=cluster-admin \
-      --serviceaccount=kube-system:tiller
+- name: HELM - Create Tiller ServiceAccount
+  k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: ServiceAccount
+      metadata:
+        name: tiller
+        namespace: kube-system
 
-    helm init --service-account tiller
-  become_user: "{{ ansible_user }}"
-  become: false
+- name: HELM - Apply Tiller RBAC definition
+  k8s:
+    state: present
+    definition: "{{ lookup('file', 'files/tiller-rbac.yml') | from_yaml }}"
+
+- name: HELM - Retrieve helm binary archive
+  unarchive:
+    src: https://storage.googleapis.com/kubernetes-helm/helm-v2.14.1-linux-amd64.tar.gz
+    dest: /tmp
+    creates: /usr/local/bin/helm
+    remote_src: yes
+
+- name: HELM - Move helm binary into place
+  command: >
+    cp /tmp/linux-amd64/helm /usr/local/bin/helm
+    creates=/usr/local/bin/helm
+  become: yes
+
+- name: HELM - Set up Helm and Tiller
+  command: helm init --service-account tiller
+  register: helm_init_result
+  changed_when: "'already installed' not in helm_init_result.stdout"
+
+- name: DRONE - Create a PersistentVolume
+  k8s:
+    state: present
+    definition: "{{ lookup('file', 'files/persistent-volume.yml') | from_yaml }}"
+
+- name: DRONE - Create a PersistentVolumeClaim
+  k8s:
+    state: present
+    definition: "{{ lookup('file', 'files/persistent-volume-claim.yml') | from_yaml }}"
+
+- name: DRONE - Copy helm chart
+  copy:
+    src: files/drone-chart
+    dest: /home/{{ ansible_user }}
+
+- name: DRONE - Search drone pod
+  k8s_facts:
+    kind: Pod
+    label_selectors:
+      - app = drone
+      - component = server
+  register: drone_pod
+
+- name: DRONE - Install
+  shell: helm install . --name drone
+  args:
+    chdir: /home/{{ ansible_user }}/drone-chart
+  when: drone_pod.resources[0].status is not defined

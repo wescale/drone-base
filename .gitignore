@@ -118,3 +118,6 @@ terraform.tfstate.backup
 id_rsa*
 connect-aws
 hosts.ini
+
+# helm
+values.yaml
