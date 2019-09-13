@@ -99,7 +99,17 @@
   register: drone_pod
 
 - name: DRONE - Install
+  shell: helm delete --purge drone
+  args:
+    chdir: /home/{{ ansible_user }}/drone-chart
+  when: drone_pod.resources[0].status is defined
+
+- name: DRONE - Install
   shell: helm install . --name drone
   args:
     chdir: /home/{{ ansible_user }}/drone-chart
-  when: drone_pod.resources[0].status is not defined
+
+- name: DRONE - Create an Ingress
+  k8s:
+    state: present
+    definition: "{{ lookup('file', 'files/ingress.yml') | from_yaml }}"
