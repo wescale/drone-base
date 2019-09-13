@@ -1,5 +1,5 @@
 data "aws_instances" "k3s_master" {
-  depends_on = [ "aws_autoscaling_group.asg_master" ]
+  depends_on = ["aws_autoscaling_group.asg_master"]
 
   instance_tags = {
     Name = "k3s-master"
@@ -7,7 +7,7 @@ data "aws_instances" "k3s_master" {
 }
 
 data "aws_instances" "k3s_nodes" {
-  depends_on = [ "aws_autoscaling_group.asg_nodes" ]
+  depends_on = ["aws_autoscaling_group.asg_nodes"]
 
   instance_tags = {
     Name = "k3s-node"
