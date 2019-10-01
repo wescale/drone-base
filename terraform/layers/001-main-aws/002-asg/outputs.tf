@@ -26,21 +26,25 @@ output "k3s_bastion_ip" {
   value = "${aws_instance.k3s_bastion.public_ip}"
 }
 
-resource "local_file" "ansible_inventory" {
-  content = <<EOF
-[master]
-${data.aws_instances.k3s_master.private_ips[0]} ansible_ssh_common_args='-o ProxyCommand="ssh -W %h:%p -q admin@${aws_instance.k3s_bastion.public_ip}"'
+output "ansible_inventory" {
+  value = <<EOF
+[all:vars]
+ansible_ssh_extra_args = -F ./ssh.cfg -o StrictHostKeyChecking=no -o ProxyCommand="ssh -W %h:%p -F ./ssh.cfg ${aws_instance.k3s_bastion.public_ip}"
 
-[node]
-${data.aws_instances.k3s_nodes.private_ips[0]} ansible_ssh_common_args='-o ProxyCommand="ssh -W %h:%p -q admin@${aws_instance.k3s_bastion.public_ip}"'
+[bastions:vars]
+ansible_ssh_extra_args = -F ./ssh.cfg
 
-[bastion]
-${aws_instance.k3s_bastion.public_ip}
+[masters]
+master-0 ansible_host=${data.aws_instances.k3s_master.private_ips[0]}
+
+[nodes]
+node-0 ansible_host=${data.aws_instances.k3s_nodes.private_ips[0]}
+
+[bastions]
+bastion-0 ansible_host=${aws_instance.k3s_bastion.public_ip}
 
 [k3s-cluster:children]
-master
-node
+masters
+nodes
 EOF
-
-  filename = "hosts.ini"
 }
