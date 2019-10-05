@@ -114,6 +114,7 @@ terraform.tfstate.backup
 *.tfstate.backup
 
 # configs
+ansible/group_vars/all.yml
 *.tfvars
 id_rsa*
 connect-aws

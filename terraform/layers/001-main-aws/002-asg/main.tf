@@ -148,7 +148,7 @@ resource "aws_security_group" "vpc_k3s" {
   vpc_id      = "${data.terraform_remote_state.vpc.outputs.vpc_id}"
 }
 
-resource "aws_security_group_rule" "ingress_http" {
+resource "aws_security_group_rule" "ingress_http_k3s" {
   security_group_id = "${aws_security_group.vpc_k3s.id}"
 
   from_port   = 80

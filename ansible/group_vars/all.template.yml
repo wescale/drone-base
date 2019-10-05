@@ -1,0 +1,17 @@
+# System
+ansible_user: admin
+systemd_dir: /etc/systemd/system
+master_ip: "{{ hostvars[groups['masters'][0]]['ansible_host'] | default(groups['masters'][0]) }}"
+
+# k3s
+k3s_version: v0.7.0
+
+# Drone
+drone_server_host:
+drone_admin_user:
+drone_existing_claim: drone-pv-claim
+drone_logs_debug: true
+
+# Github
+github_client_id:
+github_client_secret_value:

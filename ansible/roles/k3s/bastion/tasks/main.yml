@@ -22,7 +22,7 @@
   copy:
     dest: /home/{{ ansible_user }}/.kube/config
     content: |
-      {{ hostvars[groups['master'][0]]['kubectl_config'] }}
+      {{ hostvars[groups['masters'][0]]['kubectl_config'] }}
   when: not kube_config_file_details.stat.exists
 
 - name: PYTHON - Install pip package
@@ -102,10 +102,24 @@
       jetstack/cert-manager
   when: kubectl_cert_manager.stdout.find("Running") == -1
 
-- name: K3S - Verify if cert-manager is available
+- name: K3S - Verify if cert-manager webhook is available
   shell: kubectl get pods --namespace cert-manager -l app=webhook
-  register: kubectl_cert_manager
-  until: kubectl_cert_manager.stdout.find("Running") != -1
+  register: kubectl_cert_manager_webhook
+  until: kubectl_cert_manager_webhook.stdout.find("Running") != -1
+  retries: 5
+  delay: 10
+
+- name: K3S - Verify if cert-manager app is available
+  shell: kubectl get pods --namespace cert-manager -l app=cert-manager
+  register: kubectl_cert_manager_app
+  until: kubectl_cert_manager_app.stdout.find("Running") != -1
+  retries: 5
+  delay: 10
+
+- name: K3S - Verify if cert-manager cainjector is available
+  shell: kubectl get pods --namespace cert-manager -l app=cainjector
+  register: kubectl_cert_manager_cainjector
+  until: kubectl_cert_manager_cainjector.stdout.find("Running") != -1
   retries: 5
   delay: 10
 
@@ -134,8 +148,13 @@
 
 - name: DRONE - Copy helm chart
   copy:
-    src: files/drone-chart
+    src: charts/drone
     dest: /home/{{ ansible_user }}
+
+- name: DRONE - Template values.yaml for charts/drone
+  template:
+    src: charts/drone/values.yaml
+    dest: /home/{{ ansible_user }}/drone/values.yaml
 
 - name: DRONE - Search drone pod
   k8s_facts:
@@ -145,16 +164,23 @@
       - component = server
   register: drone_pod
 
-- name: DRONE - Install
+- name: DRONE - Remove old drone install
   shell: helm delete --purge drone
   args:
-    chdir: /home/{{ ansible_user }}/drone-chart
+    chdir: /home/{{ ansible_user }}/drone
   when: drone_pod.resources[0].status is defined
 
 - name: DRONE - Install
   shell: helm install . --name drone
   args:
-    chdir: /home/{{ ansible_user }}/drone-chart
+    chdir: /home/{{ ansible_user }}/drone
+
+- name: DRONE - Verify if drone is available
+  shell: kubectl get pods --namespace default -l app=drone
+  register: kubectl_drone
+  until: kubectl_drone.stdout.find("Running") != -1
+  retries: 5
+  delay: 10
 
 - name: DRONE - Create an Ingress
   k8s:
