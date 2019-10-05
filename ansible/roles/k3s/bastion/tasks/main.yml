@@ -1,4 +1,4 @@
-- name: KUBERNETES - Download kubectl
+- name: Download kubectl
   get_url:
     url: https://storage.googleapis.com/kubernetes-release/release/v1.15.0/bin/linux/amd64/kubectl
     dest: /usr/local/bin/kubectl
@@ -6,183 +6,21 @@
     force: yes
   become: yes
 
-- name: KUBERNETES - Check if kube config is set
+- name: Check if kube config is set
   stat:
     path: /home/{{ ansible_user }}/.kube/config
   register: kube_config_file_details
 
-- name: KUBERNETES - Create directory .kube
+- name: Create directory .kube
   file:
     path: /home/{{ ansible_user }}/.kube
     state: directory
     owner: "{{ ansible_user }}"
   when: not kube_config_file_details.stat.exists
 
-- name: KUBERNETES - Create kubectl
+- name: Create kubectl
   copy:
     dest: /home/{{ ansible_user }}/.kube/config
     content: |
       {{ hostvars[groups['masters'][0]]['kubectl_config'] }}
   when: not kube_config_file_details.stat.exists
-
-- name: PYTHON - Install pip package
-  package:
-    name: python-pip
-    state: present
-  become: yes
-
-- name: PYTHON - Install openshift pip package for k8s module
-  pip:
-    name: openshift
-    state: present
-
-- name: PYTHON - Install requests pip package for k8s module
-  pip:
-    name: requests
-    state: present
-    extra_args: --upgrade
-
-- name: HELM - Create Tiller ServiceAccount
-  k8s:
-    state: present
-    definition:
-      apiVersion: v1
-      kind: ServiceAccount
-      metadata:
-        name: tiller
-        namespace: kube-system
-
-- name: HELM - Apply Tiller RBAC definition
-  k8s:
-    state: present
-    definition: "{{ lookup('file', 'files/tiller-rbac.yml') | from_yaml }}"
-
-- name: HELM - Retrieve helm binary archive
-  unarchive:
-    src: https://storage.googleapis.com/kubernetes-helm/helm-v2.14.1-linux-amd64.tar.gz
-    dest: /tmp
-    creates: /usr/local/bin/helm
-    remote_src: yes
-
-- name: HELM - Move helm binary into place
-  command: >
-    cp /tmp/linux-amd64/helm /usr/local/bin/helm
-    creates=/usr/local/bin/helm
-  become: yes
-
-- name: HELM - Set up Helm and Tiller
-  command: helm init --service-account tiller
-  register: helm_init_result
-  changed_when: "'already installed' not in helm_init_result.stdout"
-
-- name: HELM - Verify if Tiller was installed
-  shell: kubectl get pods --namespace kube-system -l name=tiller
-  register: kubectl_kube_system_pods
-  until: kubectl_kube_system_pods.stdout.find("Running") != -1
-  retries: 5
-  delay: 10
-
-- name: K3S - Check if cert-manager is already installed
-  shell: kubectl get pods --namespace cert-manager -l app=webhook
-  register: kubectl_cert_manager
-
-- name: K3S - Setup cert-manager
-  shell: |
-    kubectl apply -f https://raw.githubusercontent.com/jetstack/cert-manager/release-0.10/deploy/manifests/00-crds.yaml
-    kubectl create namespace cert-manager
-    kubectl label namespace cert-manager certmanager.k8s.io/disable-validation=true
-    helm repo add jetstack https://charts.jetstack.io
-    helm repo update
-    helm install \
-      --name cert-manager \
-      --namespace cert-manager \
-      --version v0.10.0 \
-      --set ingressShim.defaultIssuerName=letsencrypt-prod \
-      --set ingressShim.defaultIssuerKind=ClusterIssuer \
-      jetstack/cert-manager
-  when: kubectl_cert_manager.stdout.find("Running") == -1
-
-- name: K3S - Verify if cert-manager webhook is available
-  shell: kubectl get pods --namespace cert-manager -l app=webhook
-  register: kubectl_cert_manager_webhook
-  until: kubectl_cert_manager_webhook.stdout.find("Running") != -1
-  retries: 5
-  delay: 10
-
-- name: K3S - Verify if cert-manager app is available
-  shell: kubectl get pods --namespace cert-manager -l app=cert-manager
-  register: kubectl_cert_manager_app
-  until: kubectl_cert_manager_app.stdout.find("Running") != -1
-  retries: 5
-  delay: 10
-
-- name: K3S - Verify if cert-manager cainjector is available
-  shell: kubectl get pods --namespace cert-manager -l app=cainjector
-  register: kubectl_cert_manager_cainjector
-  until: kubectl_cert_manager_cainjector.stdout.find("Running") != -1
-  retries: 5
-  delay: 10
-
-- name: K3S - Create a ClusterIssuer for let's encrypt
-  k8s:
-    state: present
-    definition: "{{ lookup('file', 'files/lets-encrypt-prod.yml') | from_yaml }}"
-
-- name: K3S - Update cert-manager
-  shell: |
-    helm upgrade \
-      --reuse-values \
-      --set ingressShim.defaultIssuerName=letsencrypt-prod \
-      --set ingressShim.defaultIssuerKind=ClusterIssuer \
-      cert-manager jetstack/cert-manager
-
-- name: DRONE - Create a PersistentVolume
-  k8s:
-    state: present
-    definition: "{{ lookup('file', 'files/persistent-volume.yml') | from_yaml }}"
-
-- name: DRONE - Create a PersistentVolumeClaim
-  k8s:
-    state: present
-    definition: "{{ lookup('file', 'files/persistent-volume-claim.yml') | from_yaml }}"
-
-- name: DRONE - Copy helm chart
-  copy:
-    src: charts/drone
-    dest: /home/{{ ansible_user }}
-
-- name: DRONE - Template values.yaml for charts/drone
-  template:
-    src: charts/drone/values.yaml
-    dest: /home/{{ ansible_user }}/drone/values.yaml
-
-- name: DRONE - Search drone pod
-  k8s_facts:
-    kind: Pod
-    label_selectors:
-      - app = drone
-      - component = server
-  register: drone_pod
-
-- name: DRONE - Remove old drone install
-  shell: helm delete --purge drone
-  args:
-    chdir: /home/{{ ansible_user }}/drone
-  when: drone_pod.resources[0].status is defined
-
-- name: DRONE - Install
-  shell: helm install . --name drone
-  args:
-    chdir: /home/{{ ansible_user }}/drone
-
-- name: DRONE - Verify if drone is available
-  shell: kubectl get pods --namespace default -l app=drone
-  register: kubectl_drone
-  until: kubectl_drone.stdout.find("Running") != -1
-  retries: 5
-  delay: 10
-
-- name: DRONE - Create an Ingress
-  k8s:
-    state: present
-    definition: "{{ lookup('file', 'files/ingress.yml') | from_yaml }}"

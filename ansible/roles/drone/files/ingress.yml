@@ -14,6 +14,7 @@ spec:
   - host: drone.rbwescaledrone-dev.rbwscaws.jdxlabs.com
     http:
       paths:
-      - backend:
+      - path: /
+        backend:
           serviceName: drone-drone
           servicePort: 80

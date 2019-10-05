@@ -18,3 +18,7 @@
   become: no
   roles:
     - { role: k3s/bastion }
+    - { role: python-k8s-modules }
+    - { role: helm }
+    - { role: cert-manager }
+    - { role: drone }

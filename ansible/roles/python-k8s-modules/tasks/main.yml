@@ -1,0 +1,16 @@
+- name: Install pip package
+  package:
+    name: python-pip
+    state: present
+  become: yes
+
+- name: Install openshift pip package for k8s module
+  pip:
+    name: openshift
+    state: present
+
+- name: Install requests pip package for k8s module
+  pip:
+    name: requests
+    state: present
+    extra_args: --upgrade

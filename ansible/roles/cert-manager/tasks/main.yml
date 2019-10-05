@@ -1,0 +1,53 @@
+- name: Check if cert-manager is already installed
+  shell: kubectl get pods --namespace cert-manager -l app=webhook
+  register: kubectl_cert_manager
+
+- name: Setup cert-manager
+  shell: |
+    kubectl apply -f https://raw.githubusercontent.com/jetstack/cert-manager/release-{{ cert_manager_version }}/deploy/manifests/00-crds.yaml
+    kubectl create namespace cert-manager
+    kubectl label namespace cert-manager certmanager.k8s.io/disable-validation=true
+    helm repo add jetstack https://charts.jetstack.io
+    helm repo update
+    helm install \
+      --name cert-manager \
+      --namespace cert-manager \
+      --version v{{ cert_manager_version_long }} \
+      --set ingressShim.defaultIssuerName=letsencrypt-prod \
+      --set ingressShim.defaultIssuerKind=ClusterIssuer \
+      jetstack/cert-manager
+  when: kubectl_cert_manager.stdout.find("Running") == -1
+
+- name: Verify if cert-manager webhook is available
+  shell: kubectl get pods --namespace cert-manager -l app=webhook
+  register: kubectl_cert_manager_webhook
+  until: kubectl_cert_manager_webhook.stdout.find("Running") != -1
+  retries: 5
+  delay: 10
+
+- name: Verify if cert-manager app is available
+  shell: kubectl get pods --namespace cert-manager -l app=cert-manager
+  register: kubectl_cert_manager_app
+  until: kubectl_cert_manager_app.stdout.find("Running") != -1
+  retries: 5
+  delay: 10
+
+- name: Verify if cert-manager cainjector is available
+  shell: kubectl get pods --namespace cert-manager -l app=cainjector
+  register: kubectl_cert_manager_cainjector
+  until: kubectl_cert_manager_cainjector.stdout.find("Running") != -1
+  retries: 5
+  delay: 10
+
+- name: Create a ClusterIssuer for let's encrypt
+  k8s:
+    state: present
+    definition: "{{ lookup('file', 'files/lets-encrypt-prod.yml') | from_yaml }}"
+
+- name: Update cert-manager
+  shell: |
+    helm upgrade \
+      --reuse-values \
+      --set ingressShim.defaultIssuerName=letsencrypt-prod \
+      --set ingressShim.defaultIssuerKind=ClusterIssuer \
+      cert-manager jetstack/cert-manager

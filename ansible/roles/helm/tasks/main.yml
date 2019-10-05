@@ -1,0 +1,39 @@
+- name: Create Tiller ServiceAccount
+  k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: ServiceAccount
+      metadata:
+        name: tiller
+        namespace: kube-system
+
+- name: Apply Tiller RBAC definition
+  k8s:
+    state: present
+    definition: "{{ lookup('file', 'files/tiller-rbac.yml') | from_yaml }}"
+
+- name: Retrieve helm binary archive
+  unarchive:
+    src: https://storage.googleapis.com/kubernetes-helm/helm-v{{ helm_version }}-linux-amd64.tar.gz
+    dest: /tmp
+    creates: /usr/local/bin/helm
+    remote_src: yes
+
+- name: Move helm binary into place
+  command: >
+    cp /tmp/linux-amd64/helm /usr/local/bin/helm
+    creates=/usr/local/bin/helm
+  become: yes
+
+- name: Set up Helm and Tiller
+  command: helm init --service-account tiller
+  register: helm_init_result
+  changed_when: "'already installed' not in helm_init_result.stdout"
+
+- name: Verify if Tiller was installed
+  shell: kubectl get pods --namespace kube-system -l name=tiller
+  register: kubectl_kube_system_pods
+  until: kubectl_kube_system_pods.stdout.find("Running") != -1
+  retries: 5
+  delay: 10
