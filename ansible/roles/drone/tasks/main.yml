@@ -1,12 +1,12 @@
 - name: Create a PersistentVolume
   k8s:
     state: present
-    definition: "{{ lookup('file', 'files/persistent-volume.yml') | from_yaml }}"
+    definition: "{{ lookup('file', 'persistent-volume.yml') | from_yaml }}"
 
 - name: Create a PersistentVolumeClaim
   k8s:
     state: present
-    definition: "{{ lookup('file', 'files/persistent-volume-claim.yml') | from_yaml }}"
+    definition: "{{ lookup('template', 'persistent-volume-claim.yml') | from_yaml }}"
 
 - name: Copy helm chart
   copy:
@@ -37,7 +37,7 @@
   args:
     chdir: /home/{{ ansible_user }}/drone
 
-- name: Verify if drone is available
+- name: Verify if drone pod is available
   shell: kubectl get pods --namespace default -l app=drone
   register: kubectl_drone
   until: kubectl_drone.stdout.find("Running") != -1
@@ -47,4 +47,13 @@
 - name: Create an Ingress
   k8s:
     state: present
-    definition: "{{ lookup('file', 'files/ingress.yml') | from_yaml }}"
+    definition: "{{ lookup('template', 'ingress.yml') | from_yaml }}"
+
+- name: Check if drone service is reachable
+  uri:
+    url: http://{{ drone_server_host }}
+    method: GET
+  register: drone_url
+  until: drone_url.status == 200
+  retries: 5
+  delay: 10

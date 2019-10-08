@@ -8,10 +8,10 @@ metadata:
 spec:
   tls:
   - hosts:
-    - drone.rbwescaledrone-dev.rbwscaws.jdxlabs.com
+    - {{ drone_server_host }}
     secretName: letsencrypt-prod
   rules:
-  - host: drone.rbwescaledrone-dev.rbwscaws.jdxlabs.com
+  - host: {{ drone_server_host }}
     http:
       paths:
       - path: /
