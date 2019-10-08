@@ -119,6 +119,3 @@ ansible/group_vars/all.yml
 id_rsa*
 connect-aws
 inventory
-
-# helm
-values.yaml
