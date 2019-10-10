@@ -4,36 +4,23 @@
     dest: /usr/local/bin/kubectl
     mode: 0755
     force: yes
+  become: yes
+
+- name: Check if kube config is set
+  stat:
+    path: /home/{{ ansible_user }}/.kube/config
+  register: kube_config_file_details
 
 - name: Create directory .kube
   file:
     path: /home/{{ ansible_user }}/.kube
     state: directory
     owner: "{{ ansible_user }}"
+  when: not kube_config_file_details.stat.exists
 
 - name: Create kubectl
   copy:
     dest: /home/{{ ansible_user }}/.kube/config
     content: |
-      {{ hostvars[groups['master'][0]]['kubectl_config'] }}
-
-- name: Install helm (download script)
-  get_url:
-    url: https://git.io/get_helm.sh
-    dest: /home/{{ ansible_user }}/get_helm.sh
-    mode: 0700
-
-- name: Install helm (execute script)
-  shell: /home/{{ ansible_user }}/get_helm.sh
-
-- name: Configure tiller
-  shell: |
-    kubectl -n kube-system create serviceaccount tiller
-
-    kubectl create clusterrolebinding tiller \
-      --clusterrole=cluster-admin \
-      --serviceaccount=kube-system:tiller
-
-    helm init --service-account tiller
-  become_user: "{{ ansible_user }}"
-  become: false
+      {{ hostvars[groups['masters'][0]]['kubectl_config'] }}
+  when: not kube_config_file_details.stat.exists

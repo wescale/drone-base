@@ -148,7 +148,7 @@ resource "aws_security_group" "vpc_k3s" {
   vpc_id      = "${data.terraform_remote_state.vpc.outputs.vpc_id}"
 }
 
-resource "aws_security_group_rule" "ingress_http" {
+resource "aws_security_group_rule" "ingress_http_k3s" {
   security_group_id = "${aws_security_group.vpc_k3s.id}"
 
   from_port   = 80
@@ -178,14 +178,24 @@ resource "aws_security_group_rule" "ingress_ssh_bastion_k3s" {
   type                     = "ingress"
 }
 
+resource "aws_security_group_rule" "ingress_all_k3s" {
+  security_group_id = "${aws_security_group.vpc_k3s.id}"
+
+  from_port                = 0
+  to_port                  = 0
+  protocol                 = "-1"
+  source_security_group_id = "${aws_security_group.vpc_k3s.id}"
+  type                     = "ingress"
+}
+
 resource "aws_security_group_rule" "ingress_6443_k3s" {
   security_group_id = "${aws_security_group.vpc_k3s.id}"
 
-  from_port                = 6443
-  to_port                  = 6443
-  protocol                 = "tcp"
-  cidr_blocks              = ["${var.vpc_cidr}"]
-  type                     = "ingress"
+  from_port   = 6443
+  to_port     = 6443
+  protocol    = "tcp"
+  cidr_blocks = ["${var.vpc_cidr}"]
+  type        = "ingress"
 }
 
 resource "aws_security_group_rule" "egress_all_k3s" {
