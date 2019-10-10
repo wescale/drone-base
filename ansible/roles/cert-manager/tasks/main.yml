@@ -43,11 +43,3 @@
   k8s:
     state: present
     definition: "{{ lookup('file', 'files/lets-encrypt-prod.yml') | from_yaml }}"
-
-- name: Update cert-manager
-  shell: |
-    helm upgrade \
-      --reuse-values \
-      --set ingressShim.defaultIssuerName=letsencrypt-prod \
-      --set ingressShim.defaultIssuerKind=ClusterIssuer \
-      cert-manager jetstack/cert-manager
