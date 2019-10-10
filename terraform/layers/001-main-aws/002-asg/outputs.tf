@@ -29,10 +29,10 @@ output "k3s_bastion_ip" {
 output "ansible_inventory" {
   value = <<EOF
 [all:vars]
-ansible_ssh_extra_args = -F ./ssh.cfg -o StrictHostKeyChecking=no -o ProxyCommand="ssh -W %h:%p -F ./ssh.cfg ${aws_instance.k3s_bastion.public_ip}"
+ansible_ssh_extra_args=-F ./ssh.cfg -o StrictHostKeyChecking=no -o ProxyCommand="ssh -W %h:%p -F ./ssh.cfg ${aws_instance.k3s_bastion.public_ip}"
 
 [bastions:vars]
-ansible_ssh_extra_args = -F ./ssh.cfg
+ansible_ssh_extra_args=-F ./ssh.cfg
 
 [masters]
 master-0 ansible_host=${data.aws_instances.k3s_master.private_ips[0]}
