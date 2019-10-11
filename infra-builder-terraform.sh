@@ -2,7 +2,7 @@
 
 set -e
 
-# default values :
+
 help=false
 action=apply
 region=eu-west-1
@@ -26,8 +26,11 @@ while true; do
     --destroy)
         action=destroy
         shift ;;
+    --category)
+        inputCategory=$2
+        shift 2 ;;
     --layer)
-        layer=$2
+        inputLayer=$2
         shift 2 ;;
     '')
         break;;
@@ -41,14 +44,37 @@ if [ "$help" = true ] || [ -z "$account" ] || [ -z "$region" ] || [ -z "$action"
     echo "Usage:
     ./infra-builder-terraform.sh \\
         --account <group>-<env> \\
-        --layer 001-vpc \\
+        [--category 001-main-aws] \\
+        [--layer 001-vpc] \\
         [--region eu-west-1] \\
         [--plan] \\
         [--destroy]"
     exit 1
 fi
 
+
+baseDir=$(pwd)
+layers_dir="${baseDir}/terraform/layers"
+
+relative_config_dir="./../../../../configs/${group}/${env}/terraform"
+
+options=""
+if [ "$action" = "apply" ] || [ "$action" = "destroy" ]; then
+    options="-auto-approve"
+fi
+
+optionsLs=""
+if [ "$action" = "destroy" ]; then
+    optionsLs="-r"
+fi
+
 function terraform_init() {
+    category="$1"
+    layer="$2"
+
+    echo "### Initialize Layer : $category/$layer"
+    echo "##################################################################################"
+
     terraform init \
         -backend-config "region=${region}" \
         -backend-config "dynamodb_table=${account}-${region}-tfstate-lock" \
@@ -57,16 +83,33 @@ function terraform_init() {
         -force-copy
 }
 
-config_dir="./../../../../configs/${group}/${env}/terraform"
-layers_dir="./terraform/layers"
+function execLayer {
+    category="$1"
+    layer="$2"
 
-options=""
-if [ "$action" = "apply" ] || [ "$action" = "destroy" ]; then
-    options="-auto-approve"
+    echo "### Execute Layer : $category/$layer"
+    echo "##################################################################################"
+
+    cd "${layers_dir}/001-main-aws/${layer}"
+    terraform_init "$category" "$layer"
+    terraform ${action} ${options} \
+        -var-file ${relative_config_dir}/commons.tfvars \
+        -var-file ${relative_config_dir}/layer-${layer}.tfvars
+}
+
+layerFound=false
+for category in $(ls $optionsLs "${layers_dir}"); do
+    if [ "$category" == "$inputCategory" ] || [ -z "$inputCategory" ]; then
+        for layer in $(ls $optionsLs "${layers_dir}/${category}"); do
+            if [ "$layer" == "$inputLayer" ] || [ -z "$inputLayer" ]; then
+                layerFound=true
+                execLayer "$category" "$layer"
+            fi
+        done
+    fi
+done
+
+if [ "$layerFound" != "true" ]; then
+    echo "Error -- no layer found"
+    exit 1
 fi
-
-cd "$layers_dir/001-main-aws/${layer}"
-terraform_init
-terraform ${action} ${options} \
-    -var-file ${config_dir}/commons.tfvars \
-    -var-file ${config_dir}/layer-${layer}.tfvars
