@@ -1,0 +1,31 @@
+- name: Create alertmanager CRD
+  k8s:
+    state: present
+    definition: "{{ lookup('file', 'alertmanager.crd.yaml') | from_yaml }}"
+
+- name: Create podmonitor CRD
+  k8s:
+    state: present
+    definition: "{{ lookup('file', 'podmonitor.crd.yaml') | from_yaml }}"
+
+- name: Create prometheus CRD
+  k8s:
+    state: present
+    definition: "{{ lookup('file', 'prometheus.crd.yaml') | from_yaml }}"
+
+- name: Create prometheusrule CRD
+  k8s:
+    state: present
+    definition: "{{ lookup('file', 'prometheusrule.crd.yaml') | from_yaml }}"
+
+- name: Create servicemonitor CRD
+  k8s:
+    state: present
+    definition: "{{ lookup('file', 'servicemonitor.crd.yaml') | from_yaml }}"
+
+- name: Install prometheus helm chart
+  shell: |-
+    helm install stable/prometheus-operator \
+      --name prometheus-operator \
+      --namespace monitoring \
+      --set prometheusOperator.createCustomResource=false
