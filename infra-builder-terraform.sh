@@ -63,6 +63,10 @@ if [ "$action" = "apply" ] || [ "$action" = "destroy" ]; then
     options="-auto-approve"
 fi
 
+optionsLs=""
+if [ "$action" = "destroy" ]; then
+    optionsLs="-r"
+fi
 
 function terraform_init() {
     category="$1"
@@ -94,9 +98,9 @@ function execLayer {
 }
 
 layerFound=false
-for category in $(ls "${layers_dir}"); do
+for category in $(ls $optionsLs "${layers_dir}"); do
     if [ "$category" == "$inputCategory" ] || [ -z "$inputCategory" ]; then
-        for layer in $(ls "${layers_dir}/${category}"); do
+        for layer in $(ls $optionsLs "${layers_dir}/${category}"); do
             if [ "$layer" == "$inputLayer" ] || [ -z "$inputLayer" ]; then
                 layerFound=true
                 execLayer "$category" "$layer"
