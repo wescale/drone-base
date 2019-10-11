@@ -25,7 +25,10 @@ cd workdir/
 
 Deploy the layers
 ```
-./infra-builder-terraform.sh --account <account_name> --layer <layer_name>
+./infra-builder-terraform.sh --account <account_name> [--plan]
+
+# or you can select a particular layer
+./infra-builder-terraform.sh --account <account_name> --category <category_name> --layer <layer_name> [--plan]
 ```
 
 Generate inventory
