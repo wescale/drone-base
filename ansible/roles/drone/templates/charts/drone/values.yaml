@@ -318,7 +318,7 @@ dind:
 ## Enable scraping of the /metrics endpoint for Prometheus
 metrics:
   prometheus:
-    enabled: true
+    enabled: false
 
 ## Enable persistence using Persistent Volume Claims
 ## ref: http://kubernetes.io/docs/user-guide/persistent-volumes/
