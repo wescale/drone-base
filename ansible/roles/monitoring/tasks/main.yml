@@ -23,9 +23,17 @@
     state: present
     definition: "{{ lookup('file', 'servicemonitor.crd.yaml') | from_yaml }}"
 
-- name: Install prometheus helm chart
+- name: Copy prometheus-operator chart
+  copy:
+    src: charts/prometheus-operator
+    dest: /home/{{ ansible_user }}
+
+- name: Install prometheus-operator helm chart
   shell: |-
     helm install stable/prometheus-operator \
+      --version {{ prometheus_operator_version }} \
       --name prometheus-operator \
       --namespace monitoring \
-      --set prometheusOperator.createCustomResource=false
+      --values values.yaml
+  args:
+    chdir: /home/{{ ansible_user }}/prometheus-operator
