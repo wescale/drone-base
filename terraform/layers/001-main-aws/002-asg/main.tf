@@ -115,8 +115,8 @@ resource "aws_launch_configuration" "launch_configuration_nodes" {
   }
 }
 
-resource "aws_autoscaling_group" "asg_nodes" {
-  name_prefix = "asg-nodes"
+resource "aws_autoscaling_group" "asg_node" {
+  name_prefix = "asg-node"
 
   min_size                  = "1"
   max_size                  = "1"

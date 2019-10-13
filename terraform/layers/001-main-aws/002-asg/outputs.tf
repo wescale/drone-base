@@ -7,23 +7,35 @@ data "aws_instances" "k3s_master" {
 }
 
 data "aws_instances" "k3s_nodes" {
-  depends_on = ["aws_autoscaling_group.asg_nodes"]
+  depends_on = ["aws_autoscaling_group.asg_node"]
 
   instance_tags = {
     Name = "k3s-node"
   }
 }
 
-output "k3s_master_ip" {
+output "k3s_master_0_private_ip" {
   value = "${data.aws_instances.k3s_master.private_ips[0]}"
 }
 
-output "k3s_node_0_ip" {
+output "k3s_master_0_public_ip" {
+  value = "${data.aws_instances.k3s_master.public_ips[0]}"
+}
+
+output "k3s_node_0_private_ip" {
   value = "${data.aws_instances.k3s_nodes.private_ips[0]}"
 }
 
-output "k3s_bastion_ip" {
+output "k3s_node_0_public_ip" {
+  value = "${data.aws_instances.k3s_nodes.public_ips[0]}"
+}
+
+output "k3s_bastion_0_public_ip" {
   value = "${aws_instance.k3s_bastion.public_ip}"
+}
+
+output "k3s_bastion_0_private_ip" {
+  value = "${aws_instance.k3s_bastion.private_ip}"
 }
 
 output "ansible_inventory" {
