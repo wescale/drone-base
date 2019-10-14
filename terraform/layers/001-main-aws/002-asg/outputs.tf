@@ -7,7 +7,7 @@ data "aws_instances" "k3s_master" {
 }
 
 data "aws_instances" "k3s_nodes" {
-  depends_on = ["aws_autoscaling_group.asg_nodes"]
+  depends_on = ["aws_autoscaling_group.asg_node"]
 
   instance_tags = {
     Name = "k3s-node"
@@ -19,19 +19,31 @@ resource "aws_route53_record" "drone-record-set" {
   name    = "drone.${var.group}-${var.env}.${var.domain_url}"
   type    = "A"
   ttl     = "300"
-  records = ["${data.aws_instances.k3s_master.public_ips[0]}"]
+  records = ["${data.aws_instances.k3s_master_0_private_ip.public_ips[0]}"]
 }
 
-output "k3s_master_ip" {
+output "k3s_master_0_private_ip" {
   value = "${data.aws_instances.k3s_master.private_ips[0]}"
 }
 
-output "k3s_node_0_ip" {
+output "k3s_master_0_public_ip" {
+  value = "${data.aws_instances.k3s_master.public_ips[0]}"
+}
+
+output "k3s_node_0_private_ip" {
   value = "${data.aws_instances.k3s_nodes.private_ips[0]}"
 }
 
-output "k3s_bastion_ip" {
+output "k3s_node_0_public_ip" {
+  value = "${data.aws_instances.k3s_nodes.public_ips[0]}"
+}
+
+output "k3s_bastion_0_public_ip" {
   value = "${aws_instance.k3s_bastion.public_ip}"
+}
+
+output "k3s_bastion_0_private_ip" {
+  value = "${aws_instance.k3s_bastion.private_ip}"
 }
 
 output "ansible_inventory" {
