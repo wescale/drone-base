@@ -14,6 +14,14 @@ data "aws_instances" "k3s_nodes" {
   }
 }
 
+resource "aws_route53_record" "drone-record-set" {
+  zone_id = "${var.hosted_zone_id}"
+  name    = "drone.${var.group}-${var.env}.${var.domain_url}"
+  type    = "A"
+  ttl     = "300"
+  records = ["${data.aws_instances.k3s_master.public_ips[0]}"]
+}
+
 output "k3s_master_ip" {
   value = "${data.aws_instances.k3s_master.private_ips[0]}"
 }
