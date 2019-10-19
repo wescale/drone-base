@@ -22,4 +22,3 @@
     - { role: helm }
     - { role: cert-manager }
     - { role: drone }
-    - { role: monitoring }

@@ -1,0 +1,4 @@
+- hosts: bastions
+  become: no
+  roles:
+    - { role: monitoring }

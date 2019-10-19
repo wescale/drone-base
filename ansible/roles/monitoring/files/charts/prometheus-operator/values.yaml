@@ -47,7 +47,26 @@ defaultRules:
 
 ## Provide custom recording or alerting rules to be deployed into the cluster.
 ##
-additionalPrometheusRules: []
+#additionalPrometheusRules: []
+additionalPrometheusRules:
+- name: drone-rules
+  groups:
+    - name: drone
+      rules:
+      - alert: TooManyDronePendingBuilds
+        expr: drone_pending_builds > 5
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          message: Too many drone pending builds
+      - alert: TooManyDronePendingJobs
+        expr: drone_pending_jobs > 5
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          message: Too many drone pending jobs
 #  - name: my-rule-file
 #    groups:
 #      - name: my_group
@@ -1328,7 +1347,9 @@ prometheus:
     ## reflected in the running Pods. To change the secrets mounted into the Prometheus Pods, the object must be deleted and recreated
     ## with the new list of secrets.
     ##
-    secrets: []
+    #secrets: []
+    secrets:
+      - drone-metrics-secret
 
     ## ConfigMaps is a list of ConfigMaps in the same namespace as the Prometheus object, which shall be mounted into the Prometheus Pods.
     ## The ConfigMaps are mounted into /etc/prometheus/configmaps/.
@@ -1375,7 +1396,7 @@ prometheus:
     ## prometheus resource to be created with selectors based on values in the helm deployment,
     ## which will also match the servicemonitors created
     ##
-    serviceMonitorSelectorNilUsesHelmValues: true
+    serviceMonitorSelectorNilUsesHelmValues: false
 
     ## ServiceMonitors to be selected for target discovery.
     ## If {}, select all ServiceMonitors
@@ -1498,7 +1519,6 @@ prometheus:
     ## port to 2379 and allow etcd scraping provided it is running on all Kubernetes master nodes
     ##
     additionalScrapeConfigs: []
-
     # - job_name: kube-etcd
     #   kubernetes_sd_configs:
     #     - role: node
@@ -1586,16 +1606,7 @@ prometheus:
     ##
     additionalScrapeConfigsExternal: false
 
-  #additionalServiceMonitors: []
-  additionalServiceMonitors:
-    - name: "drone"
-      selector:
-        matchLabels:
-          app: drone-drone
-        namespaceSelector:
-          any: true
-      endpoints:
-        - port: http
+  additionalServiceMonitors: []
 
   ## Name of the ServiceMonitor to create
   ##

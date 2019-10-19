@@ -1,0 +1,12 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: drone
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: drone
+  endpoints:
+    - port: http
+      bearerTokenFile: /etc/prometheus/secrets/drone-metrics-secret/token

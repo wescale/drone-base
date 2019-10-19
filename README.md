@@ -11,6 +11,8 @@ Set the base of the infrastructure to work with Drone.io
 
 ## Deployment
 
+### Setup base
+
 For Ansible deployments, you have to rename all.template.yml to all.yml and add your own values
 
 Create and launch the workstation (docker container)
@@ -35,8 +37,15 @@ Generate inventory
 ```
 ./infra-make-inventory.sh
 ```
-
 Provision the infrastructure
 ```
-./infra-provisioning.sh
+./infra-provisioning-base.sh
+```
+
+### Setup monitoring
+
+Create a prometheus user with drone API like (this)[https://docs.drone.io/installation/metrics/] and retrieve the token
+
+```
+ ./infra-provisioning-monitoring.sh <token>
 ```
