@@ -11,5 +11,8 @@ RUN wget --quiet https://releases.hashicorp.com/terraform/0.12.8/terraform_0.12.
     && unzip terraform_0.12.8_linux_amd64.zip \
     && mv terraform /usr/bin
 
+COPY ./src/root/.bashrc /root/.bashrc
+WORKDIR /workdir
+
 ENV LC_ALL=C.UTF-8
 ENV LANG=C.UTF-8
