@@ -3,7 +3,7 @@ variable "env" {}
 variable "region" {}
 variable "drone" {}
 
-variable "domain_url" {}
+variable "drone_url" {}
 variable "hosted_zone_id" {}
 
 variable "instance_type" {
