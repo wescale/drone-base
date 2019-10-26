@@ -1,7 +1,6 @@
 variable "group" {}
 variable "env" {}
 variable "region" {}
-variable "drone" {}
 
 variable "drone_url" {}
 variable "hosted_zone_id" {}
