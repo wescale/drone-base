@@ -232,3 +232,11 @@ resource "aws_iam_role" "asg_role" {
 }
 EOF
 }
+
+resource "aws_route53_record" "drone_record_set" {
+  zone_id = "${var.hosted_zone_id}"
+  name    = "${var.drone_url}"
+  type    = "A"
+  ttl     = "10"
+  records = ["${data.aws_instances.k3s_master.public_ips[0]}"]
+}
