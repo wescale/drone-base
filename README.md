@@ -44,7 +44,11 @@ Provision the infrastructure
 
 ### Setup monitoring
 
-Create a prometheus user with drone API like [this](https://docs.drone.io/installation/metrics/) and retrieve the token
+Create a prometheus user with drone API like [this](https://docs.drone.io/installation/metrics/) and retrieve the token :
+
+```
+drone user add prometheus --machine
+```
 
 ```
  ./infra-provisioning-monitoring.sh <token>
