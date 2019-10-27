@@ -42,6 +42,16 @@ Provision the infrastructure
 ./infra-provisioning-base.sh
 ```
 
+### Connect to the drone cli
+
+You should set the environment variables like this :
+
+```
+export DRONE_SERVER=https://drone.xxx.example.com
+export DRONE_TOKEN=xxx
+drone info
+```
+
 ### Setup monitoring
 
 Create a prometheus user with drone API like [this](https://docs.drone.io/installation/metrics/) and retrieve the token :
