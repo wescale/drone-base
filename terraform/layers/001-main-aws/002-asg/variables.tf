@@ -5,6 +5,9 @@ variable "region" {}
 variable "drone_url" {}
 variable "hosted_zone_id" {}
 
+variable "master_instance_type" {
+  default = "t2.small"
+}
 variable "instance_type" {
   default = "t2.micro"
 }

@@ -48,7 +48,7 @@ resource "aws_launch_configuration" "launch_configuration_master" {
   name_prefix = "launch-configuration-master"
 
   image_id      = "${data.aws_ami.debian.id}"
-  instance_type = "${var.instance_type}"
+  instance_type = "${var.master_instance_type}"
   key_name      = "${aws_key_pair.pub_key.id}"
 
   security_groups = [
