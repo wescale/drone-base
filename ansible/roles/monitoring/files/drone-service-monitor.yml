@@ -9,4 +9,4 @@ spec:
       app: drone
   endpoints:
     - port: http
-      bearerTokenFile: /etc/prometheus/secrets/drone-metrics-secret/token
+      bearerTokenFile: /etc/prometheus/secrets/drone-metrics/token
