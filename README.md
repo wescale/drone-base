@@ -11,9 +11,9 @@ Set the base of the infrastructure to work with Drone.io
 
 ## Deployment
 
-Before all, you should set your AWS environnement with the appropriate configuration.  
+### Setup base
 
-You have a config foler you should define, according to this template files :
+For Ansible deployments, you have to rename all.template.yml to all.yml and add your own values
 
 ```
 configs/
@@ -49,8 +49,29 @@ Generate inventory
 ```
 ./infra-make-inventory.sh
 ```
-
 Provision the infrastructure
 ```
-./infra-provisioning.sh
+./infra-provisioning-base.sh
+```
+
+### Connect to the drone cli
+
+You should set the environment variables like this :
+
+```
+export DRONE_SERVER=https://drone.xxx.example.com
+export DRONE_TOKEN=xxx
+drone info
+```
+
+### Setup monitoring
+
+Create a prometheus user with drone API like [this](https://docs.drone.io/installation/metrics/) and retrieve the token :
+
+```
+drone user add prometheus --machine
+```
+
+```
+ ./infra-provisioning-monitoring.sh <token>
 ```

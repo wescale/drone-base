@@ -1,0 +1,53 @@
+- name: Test if drone secret is present
+  assert:
+    that:
+      - drone_secret is defined
+
+- name: Create alertmanager CRD
+  k8s:
+    state: present
+    definition: "{{ lookup('file', 'alertmanager.crd.yaml') | from_yaml }}"
+
+- name: Create podmonitor CRD
+  k8s:
+    state: present
+    definition: "{{ lookup('file', 'podmonitor.crd.yaml') | from_yaml }}"
+
+- name: Create prometheus CRD
+  k8s:
+    state: present
+    definition: "{{ lookup('file', 'prometheus.crd.yaml') | from_yaml }}"
+
+- name: Create prometheusrule CRD
+  k8s:
+    state: present
+    definition: "{{ lookup('file', 'prometheusrule.crd.yaml') | from_yaml }}"
+
+- name: Create servicemonitor CRD
+  k8s:
+    state: present
+    definition: "{{ lookup('file', 'servicemonitor.crd.yaml') | from_yaml }}"
+
+- name: Copy prometheus-operator chart
+  copy:
+    src: charts/prometheus-operator
+    dest: /home/{{ ansible_user }}
+
+- name: Create drone secret
+  k8s:
+    state: present
+    definition: "{{ lookup('template', 'drone-metrics-secret.yml') | from_yaml }}"
+
+- name: Create drone service monitor
+  k8s:
+    state: present
+    definition: "{{ lookup('file', 'drone-service-monitor.yml') | from_yaml }}"
+
+- name: Install prometheus-operator helm chart
+  shell: |-
+    helm install stable/prometheus-operator \
+      --version {{ prometheus_operator_version }} \
+      --name prometheus-operator \
+      --values values.yaml
+  args:
+    chdir: /home/{{ ansible_user }}/prometheus-operator
