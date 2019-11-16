@@ -1349,7 +1349,7 @@ prometheus:
     ##
     #secrets: []
     secrets:
-      - drone-metrics-secret
+      - drone-metrics
 
     ## ConfigMaps is a list of ConfigMaps in the same namespace as the Prometheus object, which shall be mounted into the Prometheus Pods.
     ## The ConfigMaps are mounted into /etc/prometheus/configmaps/.
