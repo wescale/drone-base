@@ -57,10 +57,10 @@
     remote_src: yes
     owner: "{{ ansible_user }}"
 
-- name: Replace https://localhost:6443 by https://master-pi:6443
+- name: Replace https://127.0.0.1:6443 by https://master-pi:6443
   replace:
     path: /home/{{ ansible_user }}/.kube/config
-    regexp: 'https://localhost:6443'
+    regexp: 'https://127.0.0.1:6443'
     replace: 'https://{{master_ip}}:6443'
 
 - name: Read kubectl from master
