@@ -9,6 +9,10 @@ variable "instance_type" {
   default = "t2.micro"
 }
 
+variable "instance_type_master" {
+  default = "t2.medium"
+}
+
 data "aws_ami" "debian" {
   most_recent = true
   filter {

@@ -58,7 +58,7 @@ resource "aws_security_group_rule" "egress_all_bastion" {
 
 resource "aws_instance" "k3s_master" {
   ami                         = "${data.aws_ami.debian.id}"
-  instance_type               = "${var.instance_type}"
+  instance_type               = "${var.instance_type_master}"
   subnet_id                   = "${element(data.terraform_remote_state.vpc.outputs.public_subnet_ids, 0)}"
   associate_public_ip_address = true
   key_name                    = "${aws_key_pair.pub_key.id}"
