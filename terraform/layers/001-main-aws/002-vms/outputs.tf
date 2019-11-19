@@ -1,21 +1,21 @@
 output "k3s_bastion_private_ip" {
-  value = "${aws_instance.k3s_bastion.private_ip}"
+  value = aws_instance.k3s_bastion.private_ip
 }
 
 output "k3s_bastion_public_ip" {
-  value = "${aws_instance.k3s_bastion.public_ip}"
+  value = aws_instance.k3s_bastion.public_ip
 }
 
 output "k3s_master_private_ip" {
-  value = "${aws_instance.k3s_master.private_ip}"
+  value = aws_instance.k3s_master.private_ip
 }
 
 output "k3s_master_public_ip" {
-  value = "${aws_instance.k3s_master.public_ip}"
+  value = aws_instance.k3s_master.public_ip
 }
 
 output "k3s_nodes_private_ip" {
-  value = "${aws_instance.k3s_nodes.*.private_ip}"
+  value = aws_instance.k3s_nodes.*.private_ip
 }
 
 output "ansible_inventory" {

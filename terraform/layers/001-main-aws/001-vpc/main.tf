@@ -1,5 +1,5 @@
 resource "aws_vpc" "vpc" {
-  cidr_block           = "${var.vpc_cidr}"
+  cidr_block           = var.vpc_cidr
   enable_dns_hostnames = true
   enable_dns_support   = true
 
@@ -17,7 +17,7 @@ data "aws_availability_zones" "available" {
 ##################
 
 resource "aws_internet_gateway" "gateway" {
-  vpc_id = "${aws_vpc.vpc.id}"
+  vpc_id = aws_vpc.vpc.id
 
   tags = {
     Name = "${var.group}-${var.env}-vpc1-internet-gateway"
@@ -25,7 +25,7 @@ resource "aws_internet_gateway" "gateway" {
 }
 
 resource "aws_subnet" "public_subnets" {
-  vpc_id = "${aws_vpc.vpc.id}"
+  vpc_id = aws_vpc.vpc.id
 
   count = 3
 
@@ -38,11 +38,11 @@ resource "aws_subnet" "public_subnets" {
 }
 
 resource "aws_route_table" "route_table_public" {
-  vpc_id = "${aws_vpc.vpc.id}"
+  vpc_id = aws_vpc.vpc.id
 
   route {
     cidr_block = "0.0.0.0/0"
-    gateway_id = "${aws_internet_gateway.gateway.id}"
+    gateway_id = aws_internet_gateway.gateway.id
   }
 
   tags = {
@@ -53,7 +53,7 @@ resource "aws_route_table" "route_table_public" {
 resource "aws_route_table_association" "route_table_public_association" {
   count          = 3
   subnet_id      = "${element(aws_subnet.public_subnets.*.id, count.index)}"
-  route_table_id = "${aws_route_table.route_table_public.id}"
+  route_table_id = aws_route_table.route_table_public.id
 }
 
 ###################
@@ -61,7 +61,7 @@ resource "aws_route_table_association" "route_table_public_association" {
 ###################
 
 resource "aws_subnet" "private_subnets" {
-  vpc_id = "${aws_vpc.vpc.id}"
+  vpc_id = aws_vpc.vpc.id
 
   count = 3
 
@@ -78,7 +78,7 @@ resource "aws_eip" "eip" {
 }
 
 resource "aws_nat_gateway" "nat_gateway" {
-  allocation_id = "${aws_eip.eip.id}"
+  allocation_id = aws_eip.eip.id
   subnet_id     = "${element(aws_subnet.public_subnets.*.id, 0)}"
 
   tags = {
@@ -87,11 +87,11 @@ resource "aws_nat_gateway" "nat_gateway" {
 }
 
 resource "aws_route_table" "route_table_private" {
-  vpc_id = "${aws_vpc.vpc.id}"
+  vpc_id = aws_vpc.vpc.id
 
   route {
     cidr_block     = "0.0.0.0/0"
-    nat_gateway_id = "${aws_nat_gateway.nat_gateway.id}"
+    nat_gateway_id = aws_nat_gateway.nat_gateway.id
   }
 
   tags = {

@@ -1,6 +1,6 @@
 resource "aws_key_pair" "pub_key" {
   key_name   = "pub-key"
-  public_key = "${file("../../../../id_rsa.pub")}"
+  public_key = file("../../../../id_rsa.pub")
 }
 
 ###########
@@ -8,11 +8,11 @@ resource "aws_key_pair" "pub_key" {
 ###########
 
 resource "aws_instance" "k3s_bastion" {
-  ami                         = "${data.aws_ami.debian.id}"
-  instance_type               = "${var.instance_type}"
-  subnet_id                   = "${element(data.terraform_remote_state.vpc.outputs.public_subnet_ids, 0)}"
+  ami                         = data.aws_ami.debian.id
+  instance_type               = var.instance_type
+  subnet_id                   = element(data.terraform_remote_state.vpc.outputs.public_subnet_ids, 0)
   associate_public_ip_address = true
-  key_name                    = "${aws_key_pair.pub_key.id}"
+  key_name                    = aws_key_pair.pub_key.id
 
   vpc_security_group_ids = [
     "${aws_security_group.sg_bastion.id}"
@@ -25,7 +25,7 @@ resource "aws_instance" "k3s_bastion" {
 
 resource "aws_security_group" "sg_bastion" {
   name_prefix = "${var.group}-${var.env}-${var.region}-sg-bastion"
-  vpc_id      = "${data.terraform_remote_state.vpc.outputs.vpc_id}"
+  vpc_id      = data.terraform_remote_state.vpc.outputs.vpc_id
 
   tags = {
     Name = "sg-bastion"
@@ -33,7 +33,7 @@ resource "aws_security_group" "sg_bastion" {
 }
 
 resource "aws_security_group_rule" "ingress_ssh_bastion" {
-  security_group_id = "${aws_security_group.sg_bastion.id}"
+  security_group_id = aws_security_group.sg_bastion.id
 
   from_port   = 22
   to_port     = 22
@@ -43,7 +43,7 @@ resource "aws_security_group_rule" "ingress_ssh_bastion" {
 }
 
 resource "aws_security_group_rule" "egress_all_bastion" {
-  security_group_id = "${aws_security_group.sg_bastion.id}"
+  security_group_id = aws_security_group.sg_bastion.id
 
   from_port   = 0
   to_port     = 0
@@ -57,11 +57,11 @@ resource "aws_security_group_rule" "egress_all_bastion" {
 ##############
 
 resource "aws_instance" "k3s_master" {
-  ami                         = "${data.aws_ami.debian.id}"
-  instance_type               = "${var.instance_type_master}"
-  subnet_id                   = "${element(data.terraform_remote_state.vpc.outputs.public_subnet_ids, 0)}"
+  ami                         = data.aws_ami.debian.id
+  instance_type               = var.instance_type_master
+  subnet_id                   = element(data.terraform_remote_state.vpc.outputs.public_subnet_ids, 0)
   associate_public_ip_address = true
-  key_name                    = "${aws_key_pair.pub_key.id}"
+  key_name                    = aws_key_pair.pub_key.id
 
   vpc_security_group_ids = [
     "${aws_security_group.sg_k3s_master.id}"
@@ -74,7 +74,7 @@ resource "aws_instance" "k3s_master" {
 
 resource "aws_security_group" "sg_k3s_master" {
   name_prefix = "${var.group}-${var.env}-${var.region}-sg-k3s-master"
-  vpc_id      = "${data.terraform_remote_state.vpc.outputs.vpc_id}"
+  vpc_id      = data.terraform_remote_state.vpc.outputs.vpc_id
 
   tags = {
     Name = "sg-k3s-master"
@@ -82,7 +82,7 @@ resource "aws_security_group" "sg_k3s_master" {
 }
 
 resource "aws_security_group_rule" "ingress_http_k3s_master" {
-  security_group_id = "${aws_security_group.sg_k3s_master.id}"
+  security_group_id = aws_security_group.sg_k3s_master.id
 
   from_port   = 80
   to_port     = 80
@@ -92,7 +92,7 @@ resource "aws_security_group_rule" "ingress_http_k3s_master" {
 }
 
 resource "aws_security_group_rule" "ingress_https_k3s_master" {
-  security_group_id = "${aws_security_group.sg_k3s_master.id}"
+  security_group_id = aws_security_group.sg_k3s_master.id
 
   from_port   = 443
   to_port     = 443
@@ -102,7 +102,7 @@ resource "aws_security_group_rule" "ingress_https_k3s_master" {
 }
 
 resource "aws_security_group_rule" "ingress_6443_k3s_master" {
-  security_group_id = "${aws_security_group.sg_k3s_master.id}"
+  security_group_id = aws_security_group.sg_k3s_master.id
 
   from_port   = 6443
   to_port     = 6443
@@ -112,17 +112,17 @@ resource "aws_security_group_rule" "ingress_6443_k3s_master" {
 }
 
 resource "aws_security_group_rule" "ingress_ssh_bastion_k3s_master" {
-  security_group_id = "${aws_security_group.sg_k3s_master.id}"
+  security_group_id = aws_security_group.sg_k3s_master.id
 
   from_port                = 22
   to_port                  = 22
   protocol                 = "tcp"
-  source_security_group_id = "${aws_security_group.sg_bastion.id}"
+  source_security_group_id = aws_security_group.sg_bastion.id
   type                     = "ingress"
 }
 
 resource "aws_security_group_rule" "ingress_vpc_k3s_master" {
-  security_group_id = "${aws_security_group.sg_k3s_master.id}"
+  security_group_id = aws_security_group.sg_k3s_master.id
 
   from_port                = 0
   to_port                  = 0
@@ -132,7 +132,7 @@ resource "aws_security_group_rule" "ingress_vpc_k3s_master" {
 }
 
 resource "aws_security_group_rule" "egress_all_k3s_master" {
-  security_group_id = "${aws_security_group.sg_k3s_master.id}"
+  security_group_id = aws_security_group.sg_k3s_master.id
 
   from_port   = 0
   to_port     = 0
@@ -148,11 +148,11 @@ resource "aws_security_group_rule" "egress_all_k3s_master" {
 resource "aws_instance" "k3s_nodes" {
   count = 3
 
-  ami                         = "${data.aws_ami.debian.id}"
-  instance_type               = "${var.instance_type}"
-  subnet_id                   = "${element(data.terraform_remote_state.vpc.outputs.private_subnet_ids, count.index)}"
+  ami                         = data.aws_ami.debian.id
+  instance_type               = var.instance_type
+  subnet_id                   = element(data.terraform_remote_state.vpc.outputs.private_subnet_ids, count.index)
   associate_public_ip_address = false
-  key_name                    = "${aws_key_pair.pub_key.id}"
+  key_name                    = aws_key_pair.pub_key.id
 
   vpc_security_group_ids = [
     "${aws_security_group.sg_k3s_nodes.id}"
@@ -165,7 +165,7 @@ resource "aws_instance" "k3s_nodes" {
 
 resource "aws_security_group" "sg_k3s_nodes" {
   name_prefix = "${var.group}-${var.env}-${var.region}-sg-k3s-nodes"
-  vpc_id      = "${data.terraform_remote_state.vpc.outputs.vpc_id}"
+  vpc_id      = data.terraform_remote_state.vpc.outputs.vpc_id
 
   tags = {
     Name = "sg-k3s-nodes"
@@ -173,7 +173,7 @@ resource "aws_security_group" "sg_k3s_nodes" {
 }
 
 resource "aws_security_group_rule" "ingress_6443" {
-  security_group_id = "${aws_security_group.sg_k3s_nodes.id}"
+  security_group_id = aws_security_group.sg_k3s_nodes.id
 
   from_port   = 6443
   to_port     = 6443
@@ -183,17 +183,17 @@ resource "aws_security_group_rule" "ingress_6443" {
 }
 
 resource "aws_security_group_rule" "ingress_ssh_bastion_k3s_nodes" {
-  security_group_id = "${aws_security_group.sg_k3s_nodes.id}"
+  security_group_id = aws_security_group.sg_k3s_nodes.id
 
   from_port                = 22
   to_port                  = 22
   protocol                 = "tcp"
-  source_security_group_id = "${aws_security_group.sg_bastion.id}"
+  source_security_group_id = aws_security_group.sg_bastion.id
   type                     = "ingress"
 }
 
 resource "aws_security_group_rule" "ingress_vpc_k3s_nodes" {
-  security_group_id = "${aws_security_group.sg_k3s_nodes.id}"
+  security_group_id = aws_security_group.sg_k3s_nodes.id
 
   from_port                = 0
   to_port                  = 0
@@ -203,7 +203,7 @@ resource "aws_security_group_rule" "ingress_vpc_k3s_nodes" {
 }
 
 resource "aws_security_group_rule" "egress_all_k3s_nodes" {
-  security_group_id = "${aws_security_group.sg_k3s_nodes.id}"
+  security_group_id = aws_security_group.sg_k3s_nodes.id
 
   from_port   = 0
   to_port     = 0
@@ -217,8 +217,8 @@ resource "aws_security_group_rule" "egress_all_k3s_nodes" {
 ###########
 
 resource "aws_route53_record" "drone_record_set" {
-  zone_id = "${var.hosted_zone_id}"
-  name    = "${var.drone_url}"
+  zone_id = var.hosted_zone_id
+  name    = var.drone_url
   type    = "A"
   ttl     = "10"
   records = ["${aws_instance.k3s_master.public_ip}"]
