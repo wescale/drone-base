@@ -56,7 +56,8 @@ resource "aws_security_group_rule" "egress_all_bastion" {
 # k3s master #
 ##############
 
-resource "aws_instance" "k3s_master" {
+resource "aws_instance" "k3s_masters" {
+  count                       = 3
   ami                         = data.aws_ami.debian.id
   instance_type               = var.instance_type_master
   subnet_id                   = element(data.terraform_remote_state.vpc.outputs.public_subnet_ids, 0)
@@ -64,25 +65,25 @@ resource "aws_instance" "k3s_master" {
   key_name                    = aws_key_pair.pub_key.id
 
   vpc_security_group_ids = [
-    "${aws_security_group.sg_k3s_master.id}"
+    "${aws_security_group.sg_k3s_masters.id}"
   ]
 
   tags = {
-    Name = "k3s-master"
+    Name = "k3s-masters"
   }
 }
 
-resource "aws_security_group" "sg_k3s_master" {
-  name_prefix = "${var.group}-${var.env}-${var.region}-sg-k3s-master"
+resource "aws_security_group" "sg_k3s_masters" {
+  name_prefix = "${var.group}-${var.env}-${var.region}-sg-k3s-masters"
   vpc_id      = data.terraform_remote_state.vpc.outputs.vpc_id
 
   tags = {
-    Name = "sg-k3s-master"
+    Name = "sg-k3s-masters"
   }
 }
 
-resource "aws_security_group_rule" "ingress_http_k3s_master" {
-  security_group_id = aws_security_group.sg_k3s_master.id
+resource "aws_security_group_rule" "ingress_http_k3s_masters" {
+  security_group_id = aws_security_group.sg_k3s_masters.id
 
   from_port   = 80
   to_port     = 80
@@ -91,8 +92,8 @@ resource "aws_security_group_rule" "ingress_http_k3s_master" {
   type        = "ingress"
 }
 
-resource "aws_security_group_rule" "ingress_https_k3s_master" {
-  security_group_id = aws_security_group.sg_k3s_master.id
+resource "aws_security_group_rule" "ingress_https_k3s_masters" {
+  security_group_id = aws_security_group.sg_k3s_masters.id
 
   from_port   = 443
   to_port     = 443
@@ -101,8 +102,8 @@ resource "aws_security_group_rule" "ingress_https_k3s_master" {
   type        = "ingress"
 }
 
-resource "aws_security_group_rule" "ingress_6443_k3s_master" {
-  security_group_id = aws_security_group.sg_k3s_master.id
+resource "aws_security_group_rule" "ingress_6443_k3s_masters" {
+  security_group_id = aws_security_group.sg_k3s_masters.id
 
   from_port   = 6443
   to_port     = 6443
@@ -111,8 +112,8 @@ resource "aws_security_group_rule" "ingress_6443_k3s_master" {
   type        = "ingress"
 }
 
-resource "aws_security_group_rule" "ingress_ssh_bastion_k3s_master" {
-  security_group_id = aws_security_group.sg_k3s_master.id
+resource "aws_security_group_rule" "ingress_ssh_bastion_k3s_masters" {
+  security_group_id = aws_security_group.sg_k3s_masters.id
 
   from_port                = 22
   to_port                  = 22
@@ -121,8 +122,8 @@ resource "aws_security_group_rule" "ingress_ssh_bastion_k3s_master" {
   type                     = "ingress"
 }
 
-resource "aws_security_group_rule" "ingress_vpc_k3s_master" {
-  security_group_id = aws_security_group.sg_k3s_master.id
+resource "aws_security_group_rule" "ingress_vpc_k3s_masters" {
+  security_group_id = aws_security_group.sg_k3s_masters.id
 
   from_port                = 0
   to_port                  = 0
@@ -131,8 +132,8 @@ resource "aws_security_group_rule" "ingress_vpc_k3s_master" {
   type                     = "ingress"
 }
 
-resource "aws_security_group_rule" "egress_all_k3s_master" {
-  security_group_id = aws_security_group.sg_k3s_master.id
+resource "aws_security_group_rule" "egress_all_k3s_masters" {
+  security_group_id = aws_security_group.sg_k3s_masters.id
 
   from_port   = 0
   to_port     = 0
@@ -221,5 +222,5 @@ resource "aws_route53_record" "drone_record_set" {
   name    = var.drone_url
   type    = "A"
   ttl     = "10"
-  records = ["${aws_instance.k3s_master.public_ip}"]
+  records = ["${aws_instance.k3s_masters[0].public_ip}"]
 }

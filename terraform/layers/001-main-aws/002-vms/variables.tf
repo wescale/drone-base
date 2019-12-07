@@ -15,15 +15,13 @@ variable "instance_type_master" {
 
 data "aws_ami" "debian" {
   most_recent = true
+
   filter {
     name   = "name"
-    values = ["debian-stretch-hvm-x86_64-gp2*"]
+    values = ["debian-10-amd64-*"]
   }
-  filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
-  }
-  owners = ["379101102735"] # Debian Project
+
+  owners = ["136693071363"]
 }
 
 data "terraform_remote_state" "vpc" {

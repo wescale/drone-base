@@ -6,12 +6,12 @@ output "k3s_bastion_public_ip" {
   value = aws_instance.k3s_bastion.public_ip
 }
 
-output "k3s_master_private_ip" {
-  value = aws_instance.k3s_master.private_ip
+output "k3s_masters_private_ip" {
+  value = aws_instance.k3s_masters.*.private_ip
 }
 
-output "k3s_master_public_ip" {
-  value = aws_instance.k3s_master.public_ip
+output "k3s_masters_public_ip" {
+  value = aws_instance.k3s_masters.*.public_ip
 }
 
 output "k3s_nodes_private_ip" {
@@ -30,7 +30,14 @@ ansible_ssh_extra_args=-F ./ssh.cfg
 bastion ansible_host=${aws_instance.k3s_bastion.public_ip}
 
 [masters]
-master ansible_host=${aws_instance.k3s_master.private_ip}
+${
+  join("\n",
+    formatlist("master-%s ansible_host=%s",
+      split(",", replace(join(",", aws_instance.k3s_masters.*.private_ip), ".", "-")),
+      aws_instance.k3s_masters.*.private_ip
+    )
+  )
+}
 
 [nodes]
 ${

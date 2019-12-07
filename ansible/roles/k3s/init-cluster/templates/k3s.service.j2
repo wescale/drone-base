@@ -5,7 +5,7 @@ After=network-online.target
 [Service]
 ExecStartPre=-/sbin/modprobe br_netfilter
 ExecStartPre=-/sbin/modprobe overlay
-ExecStart=/usr/local/bin/k3s server --server https://{{ master_ip }}:6443 --token {{ hostvars[groups['masters'][0]]['token'] }}
+ExecStart=/usr/local/bin/k3s server --cluster-init
 KillMode=process
 Delegate=yes
 LimitNOFILE=infinity
